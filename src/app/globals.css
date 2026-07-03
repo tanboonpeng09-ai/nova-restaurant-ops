@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #0e0e0e;
+  --foreground: #f7f0e8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% -8%, rgba(255, 107, 44, 0.13), transparent 30rem),
+    radial-gradient(circle at 84% 2%, rgba(255, 209, 102, 0.08), transparent 24rem),
+    var(--background);
+  color: var(--foreground);
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  transition:
+    color 250ms ease,
+    background-color 250ms ease,
+    border-color 250ms ease,
+    opacity 250ms ease,
+    transform 250ms ease;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(255, 209, 102, 0.86);
+  outline-offset: 3px;
+}
+
+.light {
+  color-scheme: light;
+  --background: #f7f0e8;
+  --foreground: #171717;
+}
+
+.mesh-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(21, 21, 20, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(18px);
+}
+
+.light .mesh-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.78)),
+    rgba(247, 240, 232, 0.88);
+  border-color: rgba(23, 23, 23, 0.075);
+  color: #171717;
+}
+
+.surface-soft {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.085);
+}
+
+.light .surface-soft {
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+.interactive-card {
+  transition:
+    transform 250ms ease,
+    border-color 250ms ease,
+    background-color 250ms ease,
+    box-shadow 250ms ease;
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 107, 44, 0.24);
+  box-shadow: 0 22px 62px rgba(0, 0, 0, 0.28);
+}
+
+.pressable:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.input-surface {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.light .input-surface {
+  border-color: rgba(0, 0, 0, 0.09);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.fine-divider {
+  border-color: rgba(255, 255, 255, 0.085);
+}
+
+.light .fine-divider {
+  border-color: rgba(0, 0, 0, 0.075);
+}
