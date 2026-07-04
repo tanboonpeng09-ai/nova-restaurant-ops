@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock3 } from "lucide-react";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import { currency } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
@@ -38,15 +38,16 @@ export function OrderTracking({
   const current = steps.indexOf(currentOrder.status === "completed" ? "ready" : currentOrder.status);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
-      <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-6 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/84 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)] sm:p-8">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
+      <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/88 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)] sm:p-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-ember">Order tracking</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white light:text-black sm:text-4xl">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white light:text-black sm:text-5xl">
               {currentOrder.orderNumber}
             </h1>
-            <p className="mt-2 text-sm text-white/48 light:text-black/48">
+            <p className="mt-3 flex items-center gap-2 text-sm text-white/52 light:text-black/52">
+              <Clock3 size={15} className="text-saffron" />
               {syncError ?? (isRefreshing ? "Syncing latest status..." : "Live kitchen status")}
             </p>
           </div>
@@ -62,20 +63,28 @@ export function OrderTracking({
           </div>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        <div className="mt-9 rounded-card border border-white/[0.08] bg-black/16 p-4 light:border-black/[0.06] light:bg-black/[0.025] sm:p-5">
+          <div className="grid gap-4 sm:grid-cols-3">
           {steps.map((step, index) => (
             <div
               key={step}
-              className={`relative overflow-hidden rounded-card border p-5 ${
-                index <= current
-                  ? "border-emerald-400/[0.24] bg-emerald-400/[0.08]"
-                  : "border-white/[0.08] bg-white/[0.035] light:border-black/[0.07] light:bg-black/[0.02]"
-              }`}
+              className="relative"
             >
-              <div className={`grid size-10 place-items-center rounded-full ${
-                index <= current ? "bg-emerald-400/[0.14] text-emerald-300" : "bg-white/[0.05] text-white/25 light:bg-black/[0.04] light:text-black/25"
-              }`}>
-                <CheckCircle2 size={20} />
+              {index < steps.length - 1 && (
+                <div
+                  className={`absolute left-5 top-5 hidden h-px w-[calc(100%+1rem)] sm:block ${
+                    index < current ? "bg-emerald-300/45" : "bg-white/[0.09] light:bg-black/[0.08]"
+                  }`}
+                />
+              )}
+              <div
+                className={`relative z-10 grid size-11 place-items-center rounded-full ring-1 ${
+                  index <= current
+                    ? "bg-emerald-400/[0.14] text-emerald-200 ring-emerald-300/25"
+                    : "bg-white/[0.05] text-white/28 ring-white/[0.08] light:bg-black/[0.04] light:text-black/28 light:ring-black/[0.08]"
+                }`}
+              >
+                {index <= current ? <CheckCircle2 size={21} /> : <Circle size={21} />}
               </div>
               <p className="mt-4 font-semibold capitalize text-white light:text-black">
                 {step === "new" ? "Submitted" : step}
@@ -85,8 +94,9 @@ export function OrderTracking({
               </p>
             </div>
           ))}
+          </div>
         </div>
-        <div className="mt-8 space-y-3">
+        <div className="mt-7 space-y-3">
           {currentOrder.items.map((item) => (
             <div key={item.id} className="flex justify-between rounded-2xl border border-white/[0.08] bg-white/[0.045] p-4 light:border-black/[0.07] light:bg-black/[0.025]">
               <span className="font-medium text-white light:text-black">

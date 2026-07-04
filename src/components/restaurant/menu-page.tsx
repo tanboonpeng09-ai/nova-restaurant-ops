@@ -4,7 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { BellRing, CheckCircle2, Minus, Plus, ReceiptText, ShoppingBag, Sparkles } from "lucide-react";
+import {
+  BellRing,
+  CheckCircle2,
+  Clock3,
+  Minus,
+  Plus,
+  ReceiptText,
+  ShoppingBag,
+  Sparkles,
+  Star
+} from "lucide-react";
 import { toast } from "sonner";
 import { createOrderAction, createStaffRequestAction } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
@@ -42,6 +52,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
     [menuItems, selectedCategory]
   );
   const subtotal = cart.reduce((total, item) => total + item.menuItem.price * item.quantity, 0);
+  const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
   const trackOrderId = confirmedOrderId ?? lastOrderId;
   const lastOrder = orders.find((order) => order.id === trackOrderId);
 
@@ -182,10 +193,14 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:py-8">
+    <div
+      className={`mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:py-8 ${
+        cart.length > 0 ? "pb-28 lg:pb-8" : ""
+      }`}
+    >
       <section className="min-w-0">
-        <div className="overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.04] shadow-[0_18px_58px_rgba(0,0,0,0.22)] light:border-black/[0.07] light:bg-white/80 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]">
-          <div className="relative h-52 sm:h-64 lg:h-72">
+        <div className="overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] shadow-[0_20px_60px_rgba(0,0,0,0.22)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_18px_46px_rgba(40,28,18,0.1)]">
+          <div className="relative min-h-[420px] sm:min-h-[430px] lg:min-h-[460px]">
             <Image
               src={settings.heroImage}
               alt={`${settings.name} dining room`}
@@ -194,27 +209,55 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               sizes="100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/28 to-black/5" />
-            <div className="absolute bottom-5 left-5 right-5 sm:bottom-7 sm:left-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron drop-shadow">
-                Table {tableNumber || "?"}
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-5xl">{settings.name}</h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/72 sm:text-base">{settings.tagline}</p>
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.8),rgba(0,0,0,0.42)_48%,rgba(0,0,0,0.08)),linear-gradient(0deg,rgba(0,0,0,0.66),rgba(0,0,0,0.02)_58%)]" />
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-9">
+              <div className="max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/12 px-3 text-xs font-semibold text-white ring-1 ring-white/15 backdrop-blur-md">
+                    <Star size={14} className="fill-saffron text-saffron" /> 4.9
+                  </span>
+                  <span className="inline-flex h-9 items-center rounded-full bg-emerald-400/14 px-3 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/18 backdrop-blur-md">
+                    Open now
+                  </span>
+                  <span className="inline-flex h-9 items-center rounded-full bg-black/28 px-3 text-xs font-semibold text-white/82 ring-1 ring-white/12 backdrop-blur-md">
+                    Table {tableNumber || "?"}
+                  </span>
+                </div>
+                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.26em] text-saffron drop-shadow">
+                  Premium American Grill
+                </p>
+                <h1 className="mt-3 text-4xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow sm:text-6xl">
+                  {settings.name}
+                </h1>
+                <p className="mt-4 max-w-xl text-base leading-7 text-white/78 sm:text-lg">
+                  {settings.tagline}. QR ordering, live kitchen updates, and table service from your phone.
+                </p>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <a
+                    href="#menu-list"
+                    className="pressable inline-flex min-h-12 items-center justify-center rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(255,107,44,0.28)] hover:-translate-y-0.5 hover:bg-[#ff7c42]"
+                  >
+                    Start order
+                  </a>
+                  <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white/82 ring-1 ring-white/12 backdrop-blur-md">
+                    <Clock3 size={16} /> 18-24 min
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="sticky top-16 z-20 mt-4 flex max-w-full gap-2 overflow-x-auto rounded-[22px] border border-white/[0.08] bg-ink/[0.9] p-1.5 shadow-[0_14px_38px_rgba(0,0,0,0.18)] backdrop-blur-xl scrollbar-none light:border-black/[0.07] light:bg-cream/[0.92]">
+        <div className="sticky top-16 z-20 mt-5 flex max-w-full gap-2 overflow-x-auto rounded-[24px] border border-white/[0.08] bg-ink/88 p-2 shadow-[0_14px_34px_rgba(0,0,0,0.16)] backdrop-blur-xl scrollbar-none light:border-black/[0.06] light:bg-cream/92">
           {categories.map((category) => (
             <button
               type="button"
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`pressable min-h-11 whitespace-nowrap rounded-button px-5 py-2.5 text-sm font-semibold ${
+              className={`pressable min-h-10 whitespace-nowrap rounded-full px-5 text-sm font-semibold ${
                 selectedCategory === category.id
-                  ? "bg-ember text-white shadow-[0_10px_26px_rgba(255,107,44,0.2)]"
-                  : "text-white/62 hover:bg-white/[0.07] light:text-black/62 light:hover:bg-black/[0.045]"
+                  ? "bg-ember text-white shadow-[0_10px_24px_rgba(255,107,44,0.22)]"
+                  : "bg-white/[0.045] text-white/62 hover:bg-white/[0.08] light:bg-black/[0.035] light:text-black/62 light:hover:bg-black/[0.06]"
               }`}
             >
               {category.name}
@@ -222,11 +265,11 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           ))}
         </div>
 
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
+        <div id="menu-list" className="mt-7 grid gap-5 md:grid-cols-2">
           {isRefreshing && visibleItems.length === 0 ? (
             Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="rounded-card border border-white/[0.08] bg-white/[0.04] p-3 light:border-black/[0.07] light:bg-white/76">
-                <div className="aspect-[4/3] animate-pulse rounded-[20px] bg-white/[0.06] light:bg-black/[0.05]" />
+              <div key={index} className="rounded-card bg-white/[0.045] p-3 light:bg-white/82">
+                <div className="aspect-[4/3] animate-pulse rounded-button bg-white/[0.06] light:bg-black/[0.05]" />
                 <div className="mt-5 h-5 w-2/3 animate-pulse rounded-full bg-white/[0.07] light:bg-black/[0.06]" />
                 <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-white/[0.05] light:bg-black/[0.05]" />
                 <div className="mt-2 h-4 w-4/5 animate-pulse rounded-full bg-white/[0.05] light:bg-black/[0.05]" />
@@ -239,11 +282,11 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           ) : visibleItems.map((item) => (
             <article
               key={item.id}
-              className={`group overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.045] p-3 shadow-[0_18px_54px_rgba(0,0,0,0.18)] transition hover:border-white/[0.14] light:border-black/[0.07] light:bg-white/82 light:shadow-[0_18px_44px_rgba(40,28,18,0.1)] ${
-                item.isAvailable ? "" : "opacity-78"
+              className={`group overflow-hidden rounded-card bg-white/[0.045] p-3 shadow-[0_18px_48px_rgba(0,0,0,0.18)] ring-1 ring-white/[0.075] transition duration-200 hover:-translate-y-0.5 hover:bg-white/[0.06] hover:shadow-[0_22px_58px_rgba(0,0,0,0.22)] light:bg-white/86 light:shadow-[0_16px_42px_rgba(40,28,18,0.1)] light:ring-black/[0.06] light:hover:bg-white ${
+                item.isAvailable ? "" : "opacity-80"
               }`}
             >
-              <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] bg-white/[0.04]">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-button bg-white/[0.04]">
                 <Image
                   src={item.imageUrl}
                   alt={item.name}
@@ -251,21 +294,26 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className={`object-cover ${item.isAvailable ? "" : "grayscale"}`}
                 />
+                {item.isFeatured && item.isAvailable && (
+                  <span className="absolute left-3 top-3 rounded-full bg-black/54 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-saffron ring-1 ring-white/12 backdrop-blur-md">
+                    Best seller
+                  </span>
+                )}
                 {!item.isAvailable && (
-                  <div className="absolute inset-0 grid place-items-center bg-black/50">
-                    <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-black shadow-soft">
+                  <div className="absolute inset-0 grid place-items-center bg-black/42">
+                    <span className="rounded-full bg-white/92 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-black shadow-soft">
                       Sold out today
                     </span>
                   </div>
                 )}
               </div>
-              <div className="px-2 pb-2 pt-5">
-                <h2 className="text-xl font-semibold tracking-tight text-white light:text-black">{item.name}</h2>
-                <p className="mt-2 min-h-12 text-sm leading-6 text-white/54 light:text-black/56">
+              <div className="flex min-h-[178px] flex-col px-2 pb-2 pt-5">
+                <h2 className="text-[1.35rem] font-semibold tracking-tight text-white light:text-black">{item.name}</h2>
+                <p className="mt-2 text-sm leading-6 text-white/54 light:text-black/56">
                   {item.description}
                 </p>
-                <div className="mt-5 flex items-center justify-between gap-4">
-                  <p className="text-lg font-semibold text-white light:text-black">{currency(item.price)}</p>
+                <div className="mt-auto flex items-end justify-between gap-4 pt-6">
+                  <p className="text-xl font-semibold tracking-tight text-white light:text-black">{currency(item.price)}</p>
                   <button
                     type="button"
                     disabled={!item.isAvailable}
@@ -273,9 +321,9 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
                       addToCart(item);
                       toast.success(`${item.name} added.`);
                     }}
-                    className="pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[0_10px_26px_rgba(0,0,0,0.18)] disabled:cursor-not-allowed disabled:opacity-45 light:bg-black light:text-white"
+                    className="pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-black shadow-[0_10px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45 light:bg-black light:text-white"
                   >
-                    <Plus size={17} /> {item.isAvailable ? "Add" : "Sold out"}
+                    <Plus size={16} /> {item.isAvailable ? "Add" : "Sold out"}
                   </button>
                 </div>
               </div>
@@ -285,7 +333,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       </section>
 
       <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/84 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]">
+        <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/88 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ember">Cart</p>
@@ -399,6 +447,26 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           <Sparkles size={14} /> {syncError ?? (isRefreshing ? "Syncing latest data..." : "Orders sync to the kitchen in real time.")}
         </p>
       </aside>
+      {cart.length > 0 && (
+        <div className="fixed inset-x-3 bottom-3 z-40 rounded-[22px] border border-white/[0.1] bg-ink/94 p-3 shadow-[0_18px_48px_rgba(0,0,0,0.36)] backdrop-blur-xl light:border-black/[0.08] light:bg-cream/94 lg:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/42 light:text-black/45">
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+              </p>
+              <p className="mt-0.5 text-lg font-semibold text-white light:text-black">{currency(subtotal)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={submitOrder}
+              disabled={isSubmitting || cart.length === 0}
+              className="pressable inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(255,107,44,0.24)] disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              <ReceiptText size={16} /> {isSubmitting ? "Sending" : "Place order"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
