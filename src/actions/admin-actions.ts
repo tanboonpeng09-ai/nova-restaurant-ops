@@ -6,6 +6,11 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+export type AdminActionResult = {
+  ok: boolean;
+  error?: string;
+};
+
 async function requireAdmin() {
   const supabase = await createClient();
   const {
@@ -25,6 +30,15 @@ async function requireAdmin() {
   if (error || !data) redirect("/admin/login");
 
   return adminCheckClient;
+}
+
+function adminActionError(error: unknown, fallback: string): AdminActionResult {
+  if (error instanceof Error) return { ok: false, error: error.message };
+  if (error && typeof error === "object" && "message" in error) {
+    return { ok: false, error: String((error as { message?: unknown }).message ?? fallback) };
+  }
+
+  return { ok: false, error: fallback };
 }
 
 export async function signInAction(formData: FormData) {
@@ -47,27 +61,46 @@ export async function signOutAction() {
 }
 
 export async function toggleOrderingAction(currentValue: boolean) {
-  const supabase = await requireAdmin();
-  const { error } = await supabase
-    .from("restaurant_settings")
-    .update({ ordering_enabled: !currentValue, updated_at: new Date().toISOString() })
-    .limit(1);
+  try {
+    const supabase = await requireAdmin();
+    const { data: settings, error: settingsError } = await supabase
+      .from("restaurant_settings")
+      .select("id")
+      .limit(1)
+      .single();
 
-  if (error) throw error;
-  revalidatePath("/admin");
-  revalidatePath("/menu");
+    if (settingsError) throw settingsError;
+    if (!settings?.id) throw new Error("Restaurant settings row was not found.");
+
+    const { error } = await supabase
+      .from("restaurant_settings")
+      .update({ ordering_enabled: !currentValue, updated_at: new Date().toISOString() })
+      .eq("id", settings.id);
+
+    if (error) throw error;
+    revalidatePath("/admin");
+    revalidatePath("/menu");
+    return { ok: true };
+  } catch (error) {
+    return adminActionError(error, "Could not update ordering.");
+  }
 }
 
 export async function toggleItemAvailabilityAction(itemId: string, currentValue: boolean) {
-  const supabase = await requireAdmin();
-  const { error } = await supabase
-    .from("menu_items")
-    .update({ is_available: !currentValue, updated_at: new Date().toISOString() })
-    .eq("id", itemId);
+  try {
+    const supabase = await requireAdmin();
+    const { error } = await supabase
+      .from("menu_items")
+      .update({ is_available: !currentValue, updated_at: new Date().toISOString() })
+      .eq("id", itemId);
 
-  if (error) throw error;
-  revalidatePath("/admin");
-  revalidatePath("/menu");
+    if (error) throw error;
+    revalidatePath("/admin");
+    revalidatePath("/menu");
+    return { ok: true };
+  } catch (error) {
+    return adminActionError(error, "Could not update menu availability.");
+  }
 }
 
 export async function createCategoryAction(input: {
@@ -200,28 +233,33 @@ export async function deleteMenuItemAction(itemId: string) {
 }
 
 export async function resetDemoAction() {
-  const supabase = await requireAdmin();
-  const staffRequestsResult = await supabase
-    .from("staff_requests")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000");
-  if (staffRequestsResult.error) throw staffRequestsResult.error;
+  try {
+    const supabase = await requireAdmin();
+    const staffRequestsResult = await supabase
+      .from("staff_requests")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (staffRequestsResult.error) throw staffRequestsResult.error;
 
-  const orderItemsResult = await supabase
-    .from("order_items")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000");
-  if (orderItemsResult.error) throw orderItemsResult.error;
+    const orderItemsResult = await supabase
+      .from("order_items")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (orderItemsResult.error) throw orderItemsResult.error;
 
-  const ordersResult = await supabase
-    .from("orders")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000");
-  if (ordersResult.error) throw ordersResult.error;
+    const ordersResult = await supabase
+      .from("orders")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (ordersResult.error) throw ordersResult.error;
 
-  const tablesResult = await supabase.from("tables").update({ status: "available" }).eq("is_active", true);
-  if (tablesResult.error) throw tablesResult.error;
+    const tablesResult = await supabase.from("tables").update({ status: "available" }).eq("is_active", true);
+    if (tablesResult.error) throw tablesResult.error;
 
-  revalidatePath("/admin");
-  revalidatePath("/kitchen");
+    revalidatePath("/admin");
+    revalidatePath("/kitchen");
+    return { ok: true };
+  } catch (error) {
+    return adminActionError(error, "Could not reset demo data.");
+  }
 }

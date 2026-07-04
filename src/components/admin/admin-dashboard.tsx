@@ -17,6 +17,7 @@ import QRCode from "qrcode";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import {
+  type AdminActionResult,
   resetDemoAction,
   signOutAction,
   toggleItemAvailabilityAction,
@@ -117,12 +118,19 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
     doc.save(`${slugify(settings.name)}-table-qr-sheet.pdf`);
   }
 
-  async function runAdminAction(actionKey: string, action: () => Promise<void>, successMessage: string) {
+  async function runAdminAction(
+    actionKey: string,
+    action: () => Promise<void | AdminActionResult>,
+    successMessage: string
+  ) {
     if (busyAction) return;
 
     setBusyAction(actionKey);
     try {
-      await action();
+      const result = await action();
+      if (result && !result.ok) {
+        throw new Error(result.error ?? "Action failed.");
+      }
       toast.success(successMessage);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Action failed.");
