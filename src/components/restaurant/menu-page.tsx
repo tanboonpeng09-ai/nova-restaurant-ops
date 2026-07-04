@@ -188,7 +188,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           <div className="relative h-56 sm:h-64">
             <Image
               src={settings.heroImage}
-              alt="NOVA dining room"
+              alt={`${settings.name} dining room`}
               fill
               priority
               sizes="100vw"

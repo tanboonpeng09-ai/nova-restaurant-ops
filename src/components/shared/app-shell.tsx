@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Utensils } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Toaster } from "sonner";
+import { restaurantConfig } from "@/config/restaurant";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -17,13 +19,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.08] bg-ink/[0.82] backdrop-blur-2xl light:border-black/[0.07] light:bg-cream/[0.88]">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-3" aria-label="NOVA home">
+          <Link href="/" className="flex items-center gap-3" aria-label={`${restaurantConfig.shortName} home`}>
             <span className="grid size-10 place-items-center rounded-button bg-ember text-white shadow-[0_12px_34px_rgba(255,107,44,0.26)]">
-              <Utensils size={20} />
+              <Image src={restaurantConfig.logoPath} alt="" width={22} height={22} priority />
             </span>
             <span>
-              <span className="block text-sm font-semibold tracking-[0.22em]">NOVA</span>
-              <span className="block text-xs text-white/48 light:text-black/50">Restaurant Ops</span>
+              <span className="block text-sm font-semibold tracking-[0.22em]">{restaurantConfig.shortName}</span>
+              <span className="block text-xs text-white/48 light:text-black/50">{restaurantConfig.productName}</span>
             </span>
           </Link>
           <div className="hidden items-center gap-2 md:flex">

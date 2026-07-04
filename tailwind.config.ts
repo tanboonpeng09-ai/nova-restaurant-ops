@@ -10,15 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ember: "#FF6B2C",
-        saffron: "#FFD166",
-        ink: "#0E0E0E",
-        coal: "#171717",
-        cream: "#F7F0E8"
+        ember: "rgb(var(--color-primary) / <alpha-value>)",
+        saffron: "rgb(var(--color-accent) / <alpha-value>)",
+        ink: "rgb(var(--color-background) / <alpha-value>)",
+        coal: "rgb(var(--color-surface) / <alpha-value>)",
+        cream: "rgb(var(--color-light-background) / <alpha-value>)"
       },
       borderRadius: {
-        button: "16px",
-        card: "24px"
+        button: "var(--radius-button)",
+        card: "var(--radius-card)"
       },
       boxShadow: {
         soft: "0 24px 70px rgba(0, 0, 0, 0.18)",

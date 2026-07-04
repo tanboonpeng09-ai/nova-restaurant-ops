@@ -24,7 +24,7 @@ async function requireAdmin() {
 
   if (error || !data) redirect("/admin/login");
 
-  return supabase;
+  return adminCheckClient;
 }
 
 export async function signInAction(formData: FormData) {

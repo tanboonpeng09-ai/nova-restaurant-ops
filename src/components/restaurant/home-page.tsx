@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Bell, ChefHat, LineChart, QrCode, TabletSmartphone } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { restaurantConfig } from "@/config/restaurant";
 import type { RestaurantSettings } from "@/types";
 
 const demoSteps = [
@@ -27,14 +28,13 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-saffron">
-              Premium American Grill
+              {settings.tagline}
             </p>
             <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[0.94] tracking-tight text-white light:text-black sm:text-7xl lg:text-[5.7rem]">
-              NOVA STEAKHOUSE
+              {settings.name}
             </h1>
             <p className="mt-6 max-w-2xl text-[17px] leading-8 text-white/68 light:text-black/64">
-              A commercially sellable QR ordering and restaurant operations system with customer
-              ordering, kitchen workflow, table status, analytics, and demo-ready polish.
+              {settings.description}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -63,7 +63,9 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/42 light:text-black/45">
                     Live dining room
                   </p>
-                  <p className="mt-1 text-2xl font-semibold text-white light:text-black">12 tables</p>
+                  <p className="mt-1 text-2xl font-semibold text-white light:text-black">
+                    {restaurantConfig.demo.tableCount} tables
+                  </p>
                 </div>
                 <span className="rounded-full bg-emerald-400/[0.12] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200 ring-1 ring-emerald-400/20 light:text-emerald-700">
                   Online
@@ -85,7 +87,7 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
                   <div>
                     <p className="font-semibold text-white light:text-black">New order received</p>
                     <p className="mt-1 text-sm leading-6 text-white/52 light:text-black/54">
-                      Table 2 ordered Wagyu Ribeye, Signature Burger, Truffle Fries.
+                      {restaurantConfig.demo.sampleOrderSummary}
                     </p>
                   </div>
                 </div>

@@ -22,6 +22,7 @@ import {
   toggleItemAvailabilityAction,
   toggleOrderingAction
 } from "@/actions/admin-actions";
+import { restaurantConfig } from "@/config/restaurant";
 import { updateTableStatusAction } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -67,6 +68,7 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
   );
 
   function exportCsv() {
+    const filePrefix = slugify(settings.name);
     const rows = [
       ["Order Number", "Table", "Status", "Order Value", "Created"],
       ...orders.map((order) => [
@@ -82,7 +84,7 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "nova-orders.csv";
+    anchor.download = `${filePrefix}-orders.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -92,14 +94,14 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
     const dataUrl = await QRCode.toDataURL(url, { margin: 2, width: 512 });
     const anchor = document.createElement("a");
     anchor.href = dataUrl;
-    anchor.download = `nova-table-${tableNumber}-qr.png`;
+    anchor.download = `${slugify(settings.name)}-table-${tableNumber}-qr.png`;
     anchor.click();
   }
 
   async function downloadQrPdf() {
     const doc = new jsPDF();
     doc.setFontSize(18);
-    doc.text("NOVA STEAKHOUSE Table QR Codes", 16, 18);
+    doc.text(`${settings.name} Table QR Codes`, 16, 18);
     for (let index = 0; index < tables.length; index += 1) {
       const table = tables[index];
       const x = 16 + (index % 3) * 62;
@@ -112,7 +114,7 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
       doc.setFontSize(10);
       doc.text(table.label, x, y + 48);
     }
-    doc.save("nova-table-qr-sheet.pdf");
+    doc.save(`${slugify(settings.name)}-table-qr-sheet.pdf`);
   }
 
   async function runAdminAction(actionKey: string, action: () => Promise<void>, successMessage: string) {
@@ -222,7 +224,7 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
                 <XAxis dataKey="hour" stroke="currentColor" />
                 <YAxis stroke="currentColor" />
                 <Tooltip />
-                <Bar dataKey="orders" fill="#FF6B2C" radius={[10, 10, 0, 0]} />
+                <Bar dataKey="orders" fill={restaurantConfig.theme.colors.primary} radius={[10, 10, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -414,6 +416,13 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
 
 function csvCell(value: string) {
   return `"${value.replaceAll('"', '""')}"`;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 function InfoRow({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {

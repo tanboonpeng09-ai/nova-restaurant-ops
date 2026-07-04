@@ -2,6 +2,77 @@ export type OrderStatus = "new" | "preparing" | "ready" | "completed";
 export type TableStatus = "available" | "occupied" | "needs_bill" | "cleaning";
 export type StaffRequestType = "bill" | "water" | "assistance";
 
+export type ThemeId = "steakhouse" | "japanese" | "cafe" | "italian" | "fast_food";
+
+export type BusinessHours = {
+  label: string;
+  days: string;
+  hours: string;
+};
+
+export type ContactInfo = {
+  address: string;
+  phone: string;
+  email: string;
+};
+
+export type SocialLinks = {
+  website?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+};
+
+export type ThemeConfig = {
+  id: ThemeId;
+  name: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    surface: string;
+    foreground: string;
+    lightBackground: string;
+    lightForeground: string;
+  };
+  radius: {
+    button: string;
+    card: string;
+  };
+  motion: {
+    duration: string;
+    easing: string;
+  };
+};
+
+export type RestaurantConfig = {
+  name: string;
+  shortName: string;
+  productName: string;
+  tagline: string;
+  description: string;
+  logoText: string;
+  logoPath: string;
+  faviconPath: string;
+  heroImage: string;
+  backgroundImage: string;
+  contact: ContactInfo;
+  businessHours: BusinessHours[];
+  socialLinks: SocialLinks;
+  copyright: string;
+  seo: {
+    title: string;
+    description: string;
+  };
+  theme: ThemeConfig;
+  demo: {
+    tableCount: number;
+    sampleOrderSummary: string;
+    assetBasePath: string;
+  };
+};
+
 export type RestaurantSettings = {
   name: string;
   tagline: string;

@@ -4,6 +4,18 @@
 
 :root {
   color-scheme: dark;
+  --color-primary: 255 107 44;
+  --color-secondary: 26 26 26;
+  --color-accent: 255 209 102;
+  --color-background: 14 14 14;
+  --color-surface: 23 23 23;
+  --color-foreground: 247 240 232;
+  --color-light-background: 247 240 232;
+  --color-light-foreground: 23 23 23;
+  --radius-button: 16px;
+  --radius-card: 24px;
+  --motion-duration: 250ms;
+  --motion-easing: ease;
   --background: #0e0e0e;
   --foreground: #f7f0e8;
 }
@@ -31,11 +43,11 @@ input,
 textarea,
 select {
   transition:
-    color 250ms ease,
-    background-color 250ms ease,
-    border-color 250ms ease,
-    opacity 250ms ease,
-    transform 250ms ease;
+    color var(--motion-duration) var(--motion-easing),
+    background-color var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing),
+    opacity var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
 }
 
 :focus-visible {
@@ -45,8 +57,8 @@ select {
 
 .light {
   color-scheme: light;
-  --background: #f7f0e8;
-  --foreground: #171717;
+  --background: rgb(var(--color-light-background));
+  --foreground: rgb(var(--color-light-foreground));
 }
 
 .mesh-panel {
@@ -78,10 +90,10 @@ select {
 
 .interactive-card {
   transition:
-    transform 250ms ease,
-    border-color 250ms ease,
-    background-color 250ms ease,
-    box-shadow 250ms ease;
+    transform var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing),
+    background-color var(--motion-duration) var(--motion-easing),
+    box-shadow var(--motion-duration) var(--motion-easing);
 }
 
 .interactive-card:hover {

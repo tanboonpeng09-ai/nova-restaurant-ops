@@ -7,6 +7,7 @@ import type {
   StaffRequest,
   Table
 } from "@/types";
+import { restaurantConfig } from "@/config/restaurant";
 
 type OrderItemRow = {
   id: string;
@@ -19,13 +20,13 @@ type OrderItemRow = {
 
 export function mapSettings(row: Record<string, unknown>): RestaurantSettings {
   return {
-    name: String(row.restaurant_name ?? "NOVA STEAKHOUSE"),
-    tagline: String(row.tagline ?? "Premium American Grill"),
-    description: String(row.description ?? ""),
-    phone: String(row.phone ?? ""),
-    address: String(row.address ?? ""),
-    brandColor: String(row.brand_color ?? "#FF6B2C"),
-    heroImage: String(row.hero_image_url ?? ""),
+    name: String(row.restaurant_name ?? restaurantConfig.name),
+    tagline: String(row.tagline ?? restaurantConfig.tagline),
+    description: String(row.description ?? restaurantConfig.description),
+    phone: String(row.phone ?? restaurantConfig.contact.phone),
+    address: String(row.address ?? restaurantConfig.contact.address),
+    brandColor: String(row.brand_color ?? restaurantConfig.theme.colors.primary),
+    heroImage: String(row.hero_image_url ?? restaurantConfig.heroImage),
     orderingEnabled: Boolean(row.ordering_enabled),
     closedMessage: String(row.closed_message ?? "Restaurant is currently closed."),
     kitchenPin: ""

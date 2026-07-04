@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/shared/app-shell";
+import { restaurantConfig } from "@/config/restaurant";
 
 export const metadata: Metadata = {
-  title: "NOVA STEAKHOUSE Operations",
-  description: "Premium restaurant QR ordering and operations system demo."
+  title: restaurantConfig.seo.title,
+  description: restaurantConfig.seo.description,
+  icons: {
+    icon: restaurantConfig.faviconPath
+  }
 };
 
 export default function RootLayout({
@@ -13,10 +17,41 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning style={themeStyle()}>
       <body className="font-sans antialiased">
         <AppShell>{children}</AppShell>
       </body>
     </html>
   );
+}
+
+function themeStyle(): React.CSSProperties {
+  const { colors, radius, motion } = restaurantConfig.theme;
+
+  return {
+    "--color-primary": hexToRgb(colors.primary),
+    "--color-secondary": hexToRgb(colors.secondary),
+    "--color-accent": hexToRgb(colors.accent),
+    "--color-background": hexToRgb(colors.background),
+    "--color-surface": hexToRgb(colors.surface),
+    "--color-foreground": hexToRgb(colors.foreground),
+    "--color-light-background": hexToRgb(colors.lightBackground),
+    "--color-light-foreground": hexToRgb(colors.lightForeground),
+    "--radius-button": radius.button,
+    "--radius-card": radius.card,
+    "--motion-duration": motion.duration,
+    "--motion-easing": motion.easing,
+    "--background": colors.background,
+    "--foreground": colors.foreground
+  } as React.CSSProperties;
+}
+
+function hexToRgb(hex: string) {
+  const cleanHex = hex.replace("#", "");
+  const value = Number.parseInt(cleanHex, 16);
+  const red = (value >> 16) & 255;
+  const green = (value >> 8) & 255;
+  const blue = value & 255;
+
+  return `${red} ${green} ${blue}`;
 }

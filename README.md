@@ -11,6 +11,16 @@ Portfolio-quality restaurant QR ordering and operations demo built with Next.js 
 - Dark/light mode, polished restaurant branding, loading state, error boundary, responsive layouts.
 - Supabase SQL schema included for production database, RLS, storage, and realtime setup.
 
+## White-label Template
+
+The app is structured like a reusable restaurant template. To create a new restaurant version, update these files first:
+
+- `src/config/restaurant.ts` for restaurant name, tagline, contact details, SEO, theme colors, logo, hero image, and demo presentation copy.
+- `src/data/menu.ts` for categories, menu items, prices, availability, and food imagery.
+- `public/demo/steakhouse/` for grouped logo/favicon/demo assets.
+
+The current theme is `steakhouse`. Future themes such as Japanese, cafe, Italian, and fast food can be added by extending the `ThemeConfig` shape without changing page components.
+
 ## Quick Start
 
 ```bash
@@ -70,10 +80,15 @@ src/
     kitchen/
     restaurant/
     shared/
+  config/
+  data/
   lib/
     supabase/
   store/
   types/
+public/
+  demo/
+    steakhouse/
 supabase/
   schema.sql
 PROJECT_RULES.md

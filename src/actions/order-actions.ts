@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isServiceRoleConfigured } from "@/lib/env";
@@ -317,13 +318,34 @@ export async function updateTableStatusAction({
   kitchenPin?: string;
 }) {
   if (kitchenPin) await assertKitchenPin(kitchenPin);
-  const supabase = kitchenPin ? createAdminClient() : await createClient();
+  const supabase = kitchenPin ? createAdminClient() : await requireAdminMutationClient();
   const { error } = await supabase.from("tables").update({ status }).eq("id", tableId);
 
   if (error) throw error;
 
   revalidatePath("/kitchen");
   revalidatePath("/admin");
+}
+
+async function requireAdminMutationClient() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) redirect("/admin/login");
+
+  const adminCheckClient = isServiceRoleConfigured() ? createAdminClient() : supabase;
+  const { data, error } = await adminCheckClient
+    .from("admin_users")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error || !data) redirect("/admin/login");
+
+  return adminCheckClient;
 }
 
 async function assertKitchenPin(pin: string) {
