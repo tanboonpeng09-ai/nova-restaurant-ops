@@ -182,8 +182,8 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:py-8">
-      <section>
+    <div className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:py-8">
+      <section className="min-w-0">
         <div className="overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.04] shadow-[0_18px_58px_rgba(0,0,0,0.22)] light:border-black/[0.07] light:bg-white/80 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]">
           <div className="relative h-52 sm:h-64 lg:h-72">
             <Image
@@ -205,7 +205,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           </div>
         </div>
 
-        <div className="sticky top-16 z-20 mt-4 flex gap-2 overflow-x-auto rounded-[22px] border border-white/[0.08] bg-ink/[0.9] p-1.5 shadow-[0_14px_38px_rgba(0,0,0,0.18)] backdrop-blur-xl scrollbar-none light:border-black/[0.07] light:bg-cream/[0.92]">
+        <div className="sticky top-16 z-20 mt-4 flex max-w-full gap-2 overflow-x-auto rounded-[22px] border border-white/[0.08] bg-ink/[0.9] p-1.5 shadow-[0_14px_38px_rgba(0,0,0,0.18)] backdrop-blur-xl scrollbar-none light:border-black/[0.07] light:bg-cream/[0.92]">
           {categories.map((category) => (
             <button
               type="button"
@@ -239,7 +239,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           ) : visibleItems.map((item) => (
             <article
               key={item.id}
-              className={`group overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.045] p-3 shadow-[0_18px_54px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-white/[0.14] light:border-black/[0.07] light:bg-white/82 light:shadow-[0_18px_44px_rgba(40,28,18,0.1)] ${
+              className={`group overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.045] p-3 shadow-[0_18px_54px_rgba(0,0,0,0.18)] transition hover:border-white/[0.14] light:border-black/[0.07] light:bg-white/82 light:shadow-[0_18px_44px_rgba(40,28,18,0.1)] ${
                 item.isAvailable ? "" : "opacity-78"
               }`}
             >
@@ -249,9 +249,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
                   alt={item.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className={`object-cover transition duration-500 group-hover:scale-[1.035] ${
-                    item.isAvailable ? "" : "grayscale"
-                  }`}
+                  className={`object-cover ${item.isAvailable ? "" : "grayscale"}`}
                 />
                 {!item.isAvailable && (
                   <div className="absolute inset-0 grid place-items-center bg-black/50">
@@ -286,7 +284,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
         </div>
       </section>
 
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+      <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/84 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]">
           <div className="flex items-center justify-between">
             <div>
@@ -365,7 +363,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
             type="button"
             onClick={submitOrder}
             disabled={isSubmitting || cart.length === 0}
-            className="pressable mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-button bg-ember px-5 py-4 font-semibold text-white shadow-[0_16px_40px_rgba(255,107,44,0.24)] hover:-translate-y-0.5 hover:shadow-[0_20px_48px_rgba(255,107,44,0.3)] disabled:cursor-not-allowed disabled:opacity-55"
+            className="pressable mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-button bg-ember px-5 py-4 font-semibold text-white shadow-[0_16px_40px_rgba(255,107,44,0.24)] hover:shadow-[0_20px_48px_rgba(255,107,44,0.3)] disabled:cursor-not-allowed disabled:opacity-55"
           >
             <ReceiptText size={18} /> {isSubmitting ? "Sending..." : "Place Order"}
           </button>
