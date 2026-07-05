@@ -199,8 +199,8 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       }`}
     >
       <section className="min-w-0">
-        <div className="overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] shadow-[0_20px_60px_rgba(0,0,0,0.22)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_18px_46px_rgba(40,28,18,0.1)]">
-          <div className="relative min-h-[420px] sm:min-h-[430px] lg:min-h-[460px]">
+        <div className="overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] shadow-[0_18px_52px_rgba(0,0,0,0.18)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_16px_40px_rgba(40,28,18,0.09)]">
+          <div className="relative min-h-[392px] sm:min-h-[424px] lg:min-h-[448px]">
             <Image
               src={settings.heroImage}
               alt={`${settings.name} dining room`}
@@ -209,9 +209,9 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               sizes="100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.8),rgba(0,0,0,0.42)_48%,rgba(0,0,0,0.08)),linear-gradient(0deg,rgba(0,0,0,0.66),rgba(0,0,0,0.02)_58%)]" />
-            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-9">
-              <div className="max-w-2xl">
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.76),rgba(0,0,0,0.42)_48%,rgba(0,0,0,0.1)),linear-gradient(0deg,rgba(0,0,0,0.64),rgba(0,0,0,0.04)_64%)]" />
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
+              <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/12 px-3 text-xs font-semibold text-white ring-1 ring-white/15 backdrop-blur-md">
                     <Star size={14} className="fill-saffron text-saffron" /> 4.9
@@ -219,27 +219,27 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
                   <span className="inline-flex h-9 items-center rounded-full bg-emerald-400/14 px-3 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/18 backdrop-blur-md">
                     Open now
                   </span>
-                  <span className="inline-flex h-9 items-center rounded-full bg-black/28 px-3 text-xs font-semibold text-white/82 ring-1 ring-white/12 backdrop-blur-md">
+                  <span className="inline-flex h-9 items-center rounded-full bg-black/30 px-3 text-xs font-semibold text-white/78 ring-1 ring-white/12 backdrop-blur-md">
                     Table {tableNumber || "?"}
                   </span>
                 </div>
-                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.26em] text-saffron drop-shadow">
-                  Premium American Grill
+                <p className="mt-8 text-xs font-semibold uppercase tracking-[0.24em] text-saffron drop-shadow">
+                  Welcome to
                 </p>
-                <h1 className="mt-3 text-4xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow sm:text-6xl">
+                <h1 className="mt-3 max-w-3xl text-[2.65rem] font-semibold leading-[0.96] tracking-tight text-white drop-shadow sm:text-6xl">
                   {settings.name}
                 </h1>
-                <p className="mt-4 max-w-xl text-base leading-7 text-white/78 sm:text-lg">
-                  {settings.tagline}. QR ordering, live kitchen updates, and table service from your phone.
+                <p className="mt-4 max-w-2xl text-base leading-7 text-white/76 sm:text-lg">
+                  {settings.tagline}. Order for your table with a polished kitchen-connected menu.
                 </p>
-                <div className="mt-7 flex flex-wrap items-center gap-3">
+                <div className="mt-8 flex flex-wrap items-center gap-3">
                   <a
                     href="#menu-list"
-                    className="pressable inline-flex min-h-12 items-center justify-center rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(255,107,44,0.28)] hover:-translate-y-0.5 hover:bg-[#ff7c42]"
+                    className="pressable inline-flex min-h-12 items-center justify-center rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-[0_14px_32px_rgb(var(--color-primary)_/_0.24)] transition duration-200 md:hover:-translate-y-0.5"
                   >
                     Start order
                   </a>
-                  <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white/82 ring-1 ring-white/12 backdrop-blur-md">
+                  <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white/80 ring-1 ring-white/12 backdrop-blur-md">
                     <Clock3 size={16} /> 18-24 min
                   </span>
                 </div>
@@ -248,16 +248,16 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           </div>
         </div>
 
-        <div className="sticky top-16 z-20 mt-5 flex max-w-full gap-2 overflow-x-auto rounded-[24px] border border-white/[0.08] bg-ink/88 p-2 shadow-[0_14px_34px_rgba(0,0,0,0.16)] backdrop-blur-xl scrollbar-none light:border-black/[0.06] light:bg-cream/92">
+        <div className="sticky top-16 z-20 mt-6 flex max-w-full gap-2 overflow-x-auto rounded-full border border-white/[0.08] bg-ink/90 p-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.14)] backdrop-blur-xl scrollbar-none light:border-black/[0.06] light:bg-cream/94">
           {categories.map((category) => (
             <button
               type="button"
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`pressable min-h-10 whitespace-nowrap rounded-full px-5 text-sm font-semibold ${
+              className={`pressable min-h-11 whitespace-nowrap rounded-full px-5 text-sm font-semibold transition duration-200 ${
                 selectedCategory === category.id
-                  ? "bg-ember text-white shadow-[0_10px_24px_rgba(255,107,44,0.22)]"
-                  : "bg-white/[0.045] text-white/62 hover:bg-white/[0.08] light:bg-black/[0.035] light:text-black/62 light:hover:bg-black/[0.06]"
+                  ? "bg-ember text-white shadow-[0_10px_24px_rgb(var(--color-primary)_/_0.22)]"
+                  : "bg-white/[0.045] text-white/62 md:hover:-translate-y-0.5 md:hover:bg-white/[0.08] light:bg-black/[0.035] light:text-black/62 light:md:hover:bg-black/[0.06]"
               }`}
             >
               {category.name}
