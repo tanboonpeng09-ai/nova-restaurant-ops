@@ -36,17 +36,39 @@ export function OrderTracking({
   }
 
   const current = steps.indexOf(currentOrder.status === "completed" ? "ready" : currentOrder.status);
+  const currentStatusLabel =
+    currentOrder.status === "new"
+      ? "Submitted"
+      : currentOrder.status === "preparing"
+        ? "Preparing"
+        : currentOrder.status === "completed"
+          ? "Completed"
+          : "Ready";
+  const currentStatusCopy =
+    currentOrder.status === "new"
+      ? "Your order is confirmed and waiting for the kitchen."
+      : currentOrder.status === "preparing"
+        ? "The kitchen is preparing your order now."
+        : currentOrder.status === "completed"
+          ? "This order has been completed."
+          : "Your order is ready.";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
       <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/88 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)] sm:p-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-ember">Order tracking</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white light:text-black sm:text-5xl">
-              {currentOrder.orderNumber}
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-ember">Live order status</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white light:text-black sm:text-6xl">
+              {currentStatusLabel}
             </h1>
-            <p className="mt-3 flex items-center gap-2 text-sm text-white/52 light:text-black/52">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/62 light:text-black/60 sm:text-base">
+              {currentStatusCopy}
+            </p>
+            <p className="mt-5 inline-flex rounded-full bg-white/[0.06] px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/54 ring-1 ring-white/[0.07] light:bg-black/[0.035] light:text-black/54 light:ring-black/[0.055]">
+              {currentOrder.orderNumber}
+            </p>
+            <p className="mt-4 flex items-center gap-2 text-sm text-white/52 light:text-black/52">
               <Clock3 size={15} className="text-saffron" />
               {syncError ?? (isRefreshing ? "Syncing latest status..." : "Live kitchen status")}
             </p>
@@ -79,8 +101,10 @@ export function OrderTracking({
               )}
               <div
                 className={`relative z-10 grid size-11 place-items-center rounded-full ring-1 ${
-                  index <= current
-                    ? "bg-emerald-400/[0.14] text-emerald-200 ring-emerald-300/25"
+                  index === current
+                    ? "bg-emerald-300 text-black shadow-[0_12px_28px_rgba(110,231,183,0.18)] ring-emerald-200/70"
+                    : index < current
+                      ? "bg-emerald-400/[0.14] text-emerald-200 ring-emerald-300/25"
                     : "bg-white/[0.05] text-white/28 ring-white/[0.08] light:bg-black/[0.04] light:text-black/28 light:ring-black/[0.08]"
                 }`}
               >

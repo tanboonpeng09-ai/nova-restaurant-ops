@@ -209,16 +209,17 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               sizes="100vw"
               className="object-cover object-center"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.74),rgba(0,0,0,0.46)_48%,rgba(0,0,0,0.14)),linear-gradient(0deg,rgba(0,0,0,0.72),rgba(0,0,0,0.08)_68%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.86),rgba(0,0,0,0.58)_48%,rgba(0,0,0,0.22)),linear-gradient(0deg,rgba(0,0,0,0.82),rgba(0,0,0,0.16)_66%)]" />
+            <div className="absolute inset-0 bg-black/[0.08]" />
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
               <div className="max-w-4xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron drop-shadow">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
                   Premium American Grill
                 </p>
-                <h1 className="mt-4 max-w-4xl text-[3rem] font-semibold leading-[0.92] tracking-tight text-white drop-shadow sm:text-7xl lg:text-[5.25rem]">
+                <h1 className="mt-4 max-w-4xl text-[3rem] font-semibold leading-[0.92] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.72)] sm:text-7xl lg:text-[5.25rem]">
                   {settings.name}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-white/82 sm:text-lg">
+                <p className="mt-5 max-w-2xl text-base leading-7 text-white/88 drop-shadow-[0_2px_14px_rgba(0,0,0,0.58)] sm:text-lg">
                   Welcome to your table at {settings.name}. Browse a polished kitchen-connected menu and send your order when ready.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-2">
@@ -354,7 +355,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
             <input
               value={tableNumber}
               onChange={(event) => setTableNumber(event.target.value)}
-              className="mt-2 h-12 w-full rounded-button border border-white/[0.08] bg-white/[0.045] px-4 text-base font-medium text-white outline-none placeholder:text-white/35 focus:border-saffron/45 focus:bg-white/[0.07] light:border-black/[0.07] light:bg-white/74 light:text-black light:focus:bg-white"
+              className="mt-2 h-12 w-full rounded-button border border-transparent bg-white/[0.06] px-4 text-base font-medium text-white shadow-inner shadow-black/[0.04] outline-none ring-1 ring-white/[0.065] transition duration-200 placeholder:text-white/35 focus:bg-white/[0.08] focus:ring-saffron/35 light:bg-black/[0.035] light:text-black light:ring-black/[0.055] light:focus:bg-white light:focus:ring-ember/30"
             />
           </label>
           <div className="mt-5 space-y-3">
@@ -370,27 +371,27 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               </div>
             ) : (
               cart.map((cartItem) => (
-                <div key={cartItem.menuItem.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.055] p-4 light:border-black/[0.07] light:bg-black/[0.035]">
-                  <div className="flex justify-between gap-3">
-                    <p className="font-semibold text-white light:text-black">{cartItem.menuItem.name}</p>
-                    <p className="text-sm font-semibold text-white/70 light:text-black/68">
+                <div key={cartItem.menuItem.id} className="rounded-2xl bg-white/[0.052] p-4 ring-1 ring-white/[0.07] light:bg-black/[0.028] light:ring-black/[0.055]">
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="min-w-0 text-[15px] font-semibold leading-5 text-white light:text-black">{cartItem.menuItem.name}</p>
+                    <p className="shrink-0 text-sm font-semibold tabular-nums text-white/72 light:text-black/68">
                       {currency(cartItem.menuItem.price * cartItem.quantity)}
                     </p>
                   </div>
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="mt-4 inline-flex items-center rounded-full bg-black/18 p-1 ring-1 ring-white/[0.055] light:bg-white/72 light:ring-black/[0.055]">
                     <button
                       type="button"
                       onClick={() => setCartQuantity(cartItem.menuItem.id, cartItem.quantity - 1)}
-                      className="pressable grid size-10 place-items-center rounded-full bg-white/[0.08] hover:bg-white/[0.12] light:bg-black/[0.07] light:hover:bg-black/[0.1]"
+                      className="pressable grid size-9 place-items-center rounded-full text-white/68 transition duration-200 hover:bg-white/[0.075] hover:text-white light:text-black/62 light:hover:bg-black/[0.065] light:hover:text-black"
                       aria-label={`Decrease ${cartItem.menuItem.name}`}
                     >
                       <Minus size={16} />
                     </button>
-                    <span className="w-9 text-center font-semibold">{cartItem.quantity}</span>
+                    <span className="min-w-9 text-center text-sm font-semibold tabular-nums text-white light:text-black">{cartItem.quantity}</span>
                     <button
                       type="button"
                       onClick={() => setCartQuantity(cartItem.menuItem.id, cartItem.quantity + 1)}
-                      className="pressable grid size-10 place-items-center rounded-full bg-white/[0.08] hover:bg-white/[0.12] light:bg-black/[0.07] light:hover:bg-black/[0.1]"
+                      className="pressable grid size-9 place-items-center rounded-full text-white/68 transition duration-200 hover:bg-white/[0.075] hover:text-white light:text-black/62 light:hover:bg-black/[0.065] light:hover:text-black"
                       aria-label={`Increase ${cartItem.menuItem.name}`}
                     >
                       <Plus size={16} />
@@ -404,7 +405,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Notes for the kitchen"
-            className="mt-5 min-h-24 w-full rounded-button border border-white/[0.08] bg-white/[0.045] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/34 focus:border-saffron/45 focus:bg-white/[0.07] light:border-black/[0.07] light:bg-white/74 light:text-black light:placeholder:text-black/35 light:focus:bg-white"
+            className="mt-5 min-h-24 w-full rounded-button border border-transparent bg-white/[0.06] px-4 py-3 text-sm leading-6 text-white shadow-inner shadow-black/[0.04] outline-none ring-1 ring-white/[0.065] transition duration-200 placeholder:text-white/34 focus:bg-white/[0.08] focus:ring-saffron/35 light:bg-black/[0.035] light:text-black light:ring-black/[0.055] light:placeholder:text-black/35 light:focus:bg-white light:focus:ring-ember/30"
           />
           <div className="mt-5 rounded-2xl border border-white/[0.08] bg-black/18 p-4 light:border-black/[0.06] light:bg-black/[0.025]">
             <div className="flex items-center justify-between">
@@ -442,7 +443,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               key={type}
               onClick={() => requestStaff(type as StaffRequestType)}
               disabled={requestingType !== null}
-              className="pressable min-h-[72px] rounded-button border border-white/[0.08] bg-white/[0.04] px-3 py-3 text-sm font-semibold text-white/68 hover:bg-white/[0.07] light:border-black/[0.07] light:bg-white/68 light:text-black/62 light:hover:bg-white/86"
+              className="pressable min-h-[68px] rounded-button border border-transparent bg-transparent px-3 py-3 text-sm font-semibold text-white/52 ring-1 ring-white/[0.055] transition duration-200 hover:bg-white/[0.035] hover:text-white/70 light:text-black/48 light:ring-black/[0.05] light:hover:bg-black/[0.03] light:hover:text-black/66"
             >
               <BellRing className="mx-auto mb-1" size={16} />
               {requestingType === type ? "Sending" : label}
