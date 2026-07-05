@@ -209,7 +209,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               sizes="100vw"
               className="object-cover object-center"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.72),rgba(0,0,0,0.44)_46%,rgba(0,0,0,0.12)),linear-gradient(0deg,rgba(0,0,0,0.7),rgba(0,0,0,0.06)_68%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.74),rgba(0,0,0,0.46)_48%,rgba(0,0,0,0.14)),linear-gradient(0deg,rgba(0,0,0,0.72),rgba(0,0,0,0.08)_68%)]" />
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
               <div className="max-w-4xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron drop-shadow">
@@ -218,27 +218,27 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
                 <h1 className="mt-4 max-w-4xl text-[3rem] font-semibold leading-[0.92] tracking-tight text-white drop-shadow sm:text-7xl lg:text-[5.25rem]">
                   {settings.name}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-white/78 sm:text-lg">
+                <p className="mt-5 max-w-2xl text-base leading-7 text-white/82 sm:text-lg">
                   Welcome to your table at {settings.name}. Browse a polished kitchen-connected menu and send your order when ready.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex h-10 items-center rounded-full bg-black/32 px-3.5 text-xs font-semibold text-white/82 ring-1 ring-white/12 backdrop-blur-md">
+                  <span className="inline-flex h-10 items-center rounded-full bg-black/36 px-3.5 text-xs font-semibold text-white/86 ring-1 ring-white/14 backdrop-blur-md">
                     Table {tableNumber || "?"}
                   </span>
-                  <span className="inline-flex h-10 items-center rounded-full bg-emerald-400/14 px-3.5 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/18 backdrop-blur-md">
+                  <span className="inline-flex h-10 items-center rounded-full bg-emerald-400/14 px-3.5 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/20 backdrop-blur-md">
                     Open now
                   </span>
-                  <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white/12 px-3.5 text-xs font-semibold text-white ring-1 ring-white/15 backdrop-blur-md">
+                  <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white/12 px-3.5 text-xs font-semibold text-white/92 ring-1 ring-white/16 backdrop-blur-md">
                     <Star size={14} className="fill-saffron text-saffron" /> 4.9
                   </span>
-                  <span className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-3.5 text-xs font-semibold text-white/78 ring-1 ring-white/12 backdrop-blur-md">
+                  <span className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-3.5 text-xs font-semibold text-white/82 ring-1 ring-white/14 backdrop-blur-md">
                     <Clock3 size={15} /> 18-24 min
                   </span>
                 </div>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <a
                     href="#menu-list"
-                    className="pressable inline-flex min-h-12 items-center justify-center rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-[0_14px_32px_rgb(var(--color-primary)_/_0.24)] transition duration-200 md:hover:-translate-y-0.5"
+                    className="pressable inline-flex min-h-12 items-center justify-center rounded-full bg-white/12 px-5 text-sm font-semibold text-white/88 ring-1 ring-white/14 backdrop-blur-md transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-white/16"
                   >
                     Start order
                   </a>
@@ -354,17 +354,17 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
             <input
               value={tableNumber}
               onChange={(event) => setTableNumber(event.target.value)}
-              className="input-surface mt-2 w-full rounded-button px-4 py-3 text-white outline-none light:text-black"
+              className="mt-2 h-12 w-full rounded-button border border-white/[0.08] bg-white/[0.045] px-4 text-base font-medium text-white outline-none placeholder:text-white/35 focus:border-saffron/45 focus:bg-white/[0.07] light:border-black/[0.07] light:bg-white/74 light:text-black light:focus:bg-white"
             />
           </label>
           <div className="mt-5 space-y-3">
             {cart.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/[0.13] p-6 text-center light:border-black/[0.1]">
-                <span className="mx-auto grid size-12 place-items-center rounded-full bg-white/[0.06] text-saffron light:bg-black/[0.04]">
-                  <ShoppingBag size={20} />
+              <div className="rounded-2xl bg-white/[0.035] px-5 py-8 text-center ring-1 ring-white/[0.065] light:bg-black/[0.025] light:ring-black/[0.055]">
+                <span className="mx-auto grid size-12 place-items-center rounded-full bg-white/[0.055] text-saffron ring-1 ring-white/[0.06] light:bg-black/[0.04] light:ring-black/[0.05]">
+                  <ShoppingBag size={19} />
                 </span>
-                <p className="mt-4 font-semibold text-white light:text-black">Your cart is empty</p>
-                <p className="mt-2 text-sm leading-6 text-white/50 light:text-black/52">
+                <p className="mt-5 font-semibold text-white light:text-black">Your cart is empty</p>
+                <p className="mx-auto mt-2 max-w-[240px] text-sm leading-6 text-white/48 light:text-black/50">
                   Add a steak, cocktail, or side to start your table order.
                 </p>
               </div>
@@ -404,7 +404,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Notes for the kitchen"
-            className="input-surface mt-5 min-h-24 w-full rounded-button px-4 py-3 text-white outline-none placeholder:text-white/35 light:text-black light:placeholder:text-black/35"
+            className="mt-5 min-h-24 w-full rounded-button border border-white/[0.08] bg-white/[0.045] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/34 focus:border-saffron/45 focus:bg-white/[0.07] light:border-black/[0.07] light:bg-white/74 light:text-black light:placeholder:text-black/35 light:focus:bg-white"
           />
           <div className="mt-5 rounded-2xl border border-white/[0.08] bg-black/18 p-4 light:border-black/[0.06] light:bg-black/[0.025]">
             <div className="flex items-center justify-between">
@@ -417,14 +417,14 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
             type="button"
             onClick={submitOrder}
             disabled={isSubmitting || cart.length === 0}
-            className="pressable mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-button bg-ember px-5 py-4 font-semibold text-white shadow-[0_16px_40px_rgba(255,107,44,0.24)] hover:shadow-[0_20px_48px_rgba(255,107,44,0.3)] disabled:cursor-not-allowed disabled:opacity-55"
+            className="pressable mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-button bg-ember px-5 py-4 font-semibold text-white shadow-[0_18px_44px_rgb(var(--color-primary)_/_0.28)] transition duration-200 md:hover:-translate-y-0.5 md:hover:shadow-[0_22px_54px_rgb(var(--color-primary)_/_0.34)] disabled:cursor-not-allowed disabled:opacity-55"
           >
             <ReceiptText size={18} /> {isSubmitting ? "Sending..." : "Place Order"}
           </button>
           {trackOrderId && (
             <Link
               href={`/track/${trackOrderId}`}
-              className="pressable mt-3 inline-flex w-full items-center justify-center gap-2 rounded-button border border-emerald-400/20 bg-emerald-400/[0.08] px-4 py-3 text-sm font-semibold text-emerald-100 light:text-emerald-700"
+              className="pressable mt-3 inline-flex w-full items-center justify-center gap-2 rounded-button border border-white/[0.08] bg-white/[0.045] px-4 py-3 text-sm font-semibold text-white/62 hover:bg-white/[0.07] light:border-black/[0.07] light:bg-black/[0.025] light:text-black/58 light:hover:bg-black/[0.045]"
             >
               <CheckCircle2 size={17} /> Track {lastOrder?.orderNumber ?? "latest order"}
             </Link>
@@ -442,7 +442,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
               key={type}
               onClick={() => requestStaff(type as StaffRequestType)}
               disabled={requestingType !== null}
-              className="pressable min-h-[72px] rounded-button border border-white/[0.09] bg-white/[0.065] px-3 py-3 text-sm font-semibold text-white hover:bg-white/[0.09] light:bg-white/78 light:text-black"
+              className="pressable min-h-[72px] rounded-button border border-white/[0.08] bg-white/[0.04] px-3 py-3 text-sm font-semibold text-white/68 hover:bg-white/[0.07] light:border-black/[0.07] light:bg-white/68 light:text-black/62 light:hover:bg-white/86"
             >
               <BellRing className="mx-auto mb-1" size={16} />
               {requestingType === type ? "Sending" : label}
