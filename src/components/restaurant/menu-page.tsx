@@ -199,52 +199,54 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       }`}
     >
       <section className="min-w-0">
-        <div className="overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] shadow-[0_18px_52px_rgba(0,0,0,0.18)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_16px_40px_rgba(40,28,18,0.09)]">
-          <div className="relative min-h-[440px] sm:min-h-[480px] lg:min-h-[520px]">
-            <Image
-              src={settings.heroImage}
-              alt={`${settings.name} dining room`}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.86),rgba(0,0,0,0.58)_48%,rgba(0,0,0,0.22)),linear-gradient(0deg,rgba(0,0,0,0.82),rgba(0,0,0,0.16)_66%)]" />
-            <div className="absolute inset-0 bg-black/[0.08]" />
-            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
-              <div className="max-w-4xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
-                  Premium American Grill
-                </p>
-                <h1 className="mt-4 max-w-4xl text-[3rem] font-semibold leading-[0.92] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.72)] sm:text-7xl lg:text-[5.25rem]">
-                  {settings.name}
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-white/88 drop-shadow-[0_2px_14px_rgba(0,0,0,0.58)] sm:text-lg">
-                  Welcome to your table at {settings.name}. Browse a polished kitchen-connected menu and send your order when ready.
-                </p>
-                <div className="mt-8 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex h-10 items-center rounded-full bg-black/36 px-3.5 text-xs font-semibold text-white/86 ring-1 ring-white/14 backdrop-blur-md">
-                    Table {tableNumber || "?"}
-                  </span>
-                  <span className="inline-flex h-10 items-center rounded-full bg-emerald-400/14 px-3.5 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/20 backdrop-blur-md">
-                    Open now
-                  </span>
-                  <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white/12 px-3.5 text-xs font-semibold text-white/92 ring-1 ring-white/16 backdrop-blur-md">
-                    <Star size={14} className="fill-saffron text-saffron" /> 4.9
-                  </span>
-                  <span className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-3.5 text-xs font-semibold text-white/82 ring-1 ring-white/14 backdrop-blur-md">
-                    <Clock3 size={15} /> 18-24 min
-                  </span>
-                </div>
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <a
-                    href="#menu-list"
-                    className="pressable inline-flex min-h-12 items-center justify-center rounded-full bg-white/12 px-5 text-sm font-semibold text-white/88 ring-1 ring-white/14 backdrop-blur-md transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-white/16"
-                  >
-                    Start order
-                  </a>
+        <div className="relative overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] p-5 shadow-[0_18px_52px_rgba(0,0,0,0.16)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_16px_40px_rgba(40,28,18,0.08)] sm:p-6 lg:p-8">
+          <Image
+            src={settings.heroImage}
+            alt={`${settings.name} dining room`}
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 70vw"
+            className="object-cover object-center opacity-45 saturate-[0.9] light:opacity-32"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,9,8,0.96),rgba(10,9,8,0.78)_54%,rgba(10,9,8,0.42)),linear-gradient(0deg,rgba(10,9,8,0.72),rgba(10,9,8,0.2))] light:bg-[linear-gradient(90deg,rgba(255,250,244,0.96),rgba(255,250,244,0.82)_55%,rgba(255,250,244,0.58)),linear-gradient(0deg,rgba(255,250,244,0.76),rgba(255,250,244,0.32))]" />
+          <div className="relative grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-end lg:gap-8">
+            <div className="max-w-2xl">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="grid size-12 place-items-center rounded-button bg-ember text-sm font-semibold tracking-[0.18em] text-white shadow-[0_14px_34px_rgb(var(--color-primary)_/_0.24)]">
+                  NS
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron">Premium American Grill</p>
+                  <p className="mt-1 text-sm text-white/56 light:text-black/56">Modern table ordering</p>
                 </div>
               </div>
+              <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow-[0_4px_22px_rgba(0,0,0,0.46)] light:text-black sm:text-5xl lg:text-[3.75rem]">
+                {settings.name}
+              </h1>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className="inline-flex h-10 items-center rounded-full bg-emerald-400/14 px-3.5 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/20 light:bg-emerald-500/10 light:text-emerald-700 light:ring-emerald-600/18">
+                  Open now
+                </span>
+                <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white/[0.075] px-3.5 text-xs font-semibold text-white/82 ring-1 ring-white/[0.08] light:bg-black/[0.04] light:text-black/62 light:ring-black/[0.055]">
+                  <Star size={14} className="fill-saffron text-saffron" /> 4.9
+                </span>
+                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-white/[0.075] px-3.5 text-xs font-semibold text-white/72 ring-1 ring-white/[0.08] light:bg-black/[0.04] light:text-black/58 light:ring-black/[0.055]">
+                  <Clock3 size={15} /> 18-24 min
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-[20px] bg-black/28 p-4 ring-1 ring-white/[0.09] backdrop-blur-md light:bg-white/64 light:ring-black/[0.06]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/42 light:text-black/44">Your table</p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight text-white light:text-black">
+                Table {tableNumber || "?"}
+              </p>
+              <a
+                href="#menu-list"
+                className="pressable mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-button bg-ember px-5 text-sm font-semibold text-white shadow-[0_16px_34px_rgb(var(--color-primary)_/_0.24)] transition duration-200 md:hover:-translate-y-0.5 md:hover:shadow-[0_20px_42px_rgb(var(--color-primary)_/_0.3)]"
+              >
+                Start order
+              </a>
             </div>
           </div>
         </div>
