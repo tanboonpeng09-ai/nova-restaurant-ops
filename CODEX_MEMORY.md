@@ -5,18 +5,19 @@ This file preserves stable project context for future Codex sessions, including 
 ## User Working Style
 
 - The user prefers Chinese explanations, direct execution, and practical results.
-- When the user says "直接做", "帮我搞定", or provides a sprint, implement it instead of only suggesting.
+- When the user says "directly do it", "help me finish it", gives a sprint, or says "Proceed", implement the work instead of only suggesting.
 - The user cares about commercial quality, not just functional code.
-- The user dislikes generic AI-generated layouts, Bootstrap-style dashboards, and placeholder-quality UI.
-- The user wants work done sprint by sprint with testing after each sprint.
-- Commit locally after verification, but only push when the user says "可以推送".
+- The user dislikes generic AI-generated layouts, Bootstrap-style dashboards, Material UI styling, and placeholder-quality UI.
+- The user wants work done sprint by sprint with validation after each sprint.
+- Commit locally after verification only when useful or requested. Push only when the user explicitly says "可以推送".
+- The user often needs simple operational guidance, especially remembering to `cd` into the project before running commands.
 
 ## Project Identity
 
 - Project name: NOVA STEAKHOUSE Restaurant Operations System.
 - Goal: a premium, commercially sellable restaurant QR ordering and operations SaaS demo for US restaurant clients.
 - Product positioning: not just a QR menu; it should feel like a restaurant operations system.
-- Design target: Apple, Linear, Vercel, Stripe, Raycast, Toast POS, Square, Uber Eats, DoorDash.
+- Design references: Apple, Linear, Vercel, Stripe, Raycast, Toast POS, Square, Uber Eats, DoorDash, Sweetgreen, Stitch.
 - Avoid: Bootstrap, Material UI, generic admin templates, excessive glassmorphism, heavy gradients, AI-template appearance.
 
 ## Repository And Paths
@@ -33,7 +34,8 @@ Before implementation, read:
 - `PROJECT_RULES.md`
 - `UI_RULES.md`
 - `DESIGN_SYSTEM.md`
-- This file: `CODEX_MEMORY.md`
+- `CODEX_MEMORY.md`
+- For Menu V2 work, also read `MENU_V2_IMPLEMENTATION_SPEC.md`
 
 ## Verified Workflow
 
@@ -58,19 +60,9 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-Git workflow:
+Important local dev caveat:
 
-```powershell
-git status --short
-git add <changed files only>
-git commit -m "<clear message>"
-```
-
-Push only after the user explicitly says:
-
-```text
-可以推送
-```
+- Running `npm.cmd run build` while a dev server is open can make local CSS stale or 404. If the browser looks wrong after a build, restart the dev server.
 
 ## Current Technical Context
 
@@ -99,22 +91,58 @@ Push only after the user explicitly says:
 
 ## Design Decisions Already Made
 
-- The app should be refined through small scoped design sprints.
+- Work in small scoped design sprints.
 - Do not redesign unrelated surfaces during a scoped sprint.
-- For Customer Menu polish, only touch the requested surface:
-  - Hero sprint touches Hero only.
-  - Food Card sprint touches Food Card only.
-  - Cart/Input sprint touches those areas only.
-- The user repeatedly cares that the product remains recognizable while becoming more premium.
+- The product should remain recognizable while becoming more premium.
 - Primary CTA hierarchy matters: `Place Order` should be visually strongest in ordering flows.
 - Secondary actions like tracking and staff requests should be quieter.
+- Current Menu V2 direction is based on Stitch references:
+  - Mobile: light SaaS/POS ordering app.
+  - Desktop/tablet: three-pane Command Center with left category sidebar, center menu grid, right order summary.
+- Accepted mobile Menu V2 should not be redesigned again unless required for responsive safety.
 
 ## Recent Implementation State
 
-- Latest local sprint before this file: Sprint B.1 Premium Hero Redesign.
-- Latest local commit at that moment: `1de02fe Redesign customer menu hero`.
-- Previous pushed commit before that was `4d54402 Polish menu readability and tracking hierarchy`.
-- `DESIGN_SYSTEM.md` was created as a permanent design guideline and should be preserved.
+Current work area:
+
+- Menu V2 implementation and polish.
+
+Completed Menu V2 phases:
+
+- Phase 0: extracted menu presentation sections into reusable components.
+- Phase 1: mobile Menu V2 redesign.
+- Phase 1.5: mobile QA and visual polish.
+- Phase 1.6: Stitch mobile alignment polish.
+- Phase 1.7: mobile final fix.
+- Phase 2: desktop/tablet Command Center redesign.
+- Phase 2.5: desktop Command Center polish.
+- Phase 2.6: desktop final small polish.
+
+Latest Phase 2.6 changes:
+
+- Improved desktop center menu grid balance.
+- Lightly refined desktop Order Summary panel to feel more like a live POS/cart summary.
+- Checked desktop spacing for app shell, left sidebar, center content, right panel, and card gaps.
+- Mobile layout was intentionally kept intact.
+- Validation passed:
+  - `npm.cmd run typecheck`
+  - `npm.cmd run lint`
+  - `npm.cmd run build`
+
+Files currently changed in the working tree from Menu V2 and related polish:
+
+- `next.config.ts`
+- `src/components/menu/cart-command-center.tsx`
+- `src/components/menu/category-navigation.tsx`
+- `src/components/menu/empty-cart-state.tsx`
+- `src/components/menu/featured-section.tsx`
+- `src/components/menu/item-card.tsx`
+- `src/components/menu/mobile-menu-header.tsx`
+- `src/components/menu/sticky-cart-bar.tsx`
+- `src/components/restaurant/menu-page.tsx`
+- `src/components/shared/app-shell.tsx`
+
+Do not revert these changes unless the user explicitly asks.
 
 ## Known Cautions
 
@@ -122,11 +150,12 @@ Push only after the user explicitly says:
 - Be careful with `.env.local`; never commit or print it.
 - Supabase SQL may fail if schema objects already exist; avoid rerunning full schema blindly.
 - Vercel only updates after GitHub push.
-- Local browser URL will not work unless `npm.cmd run dev -- --hostname 127.0.0.1 --port 3000` is running.
+- Local browser URL will not work unless the dev server is running.
+- If PowerShell says it cannot find `C:\Users\tanbo\package.json`, the user forgot to run `cd C:\Users\tanbo\Documents\Codex\2026-07-03\qr`.
 
-## Handoff Prompt For New Codex Account
+## Handoff Prompt For New Codex Account Or New Chat
 
-If the user changes account or starts fresh, they can send:
+The user can paste this into a new Codex conversation:
 
 ```text
 This is the NOVA STEAKHOUSE Restaurant Operations System.
@@ -142,11 +171,17 @@ PROJECT_RULES.md
 UI_RULES.md
 DESIGN_SYSTEM.md
 CODEX_MEMORY.md
+MENU_V2_IMPLEMENTATION_SPEC.md
 
 Important workflow:
 - Implement sprint by sprint.
 - Do not redesign unrelated parts.
-- Run npm.cmd run typecheck, npm.cmd run lint, npm.cmd run build.
-- Commit locally after verification.
+- Keep accepted mobile Menu V2 intact unless I explicitly ask to change it.
+- For Menu V2, current direction is Stitch-inspired:
+  mobile light SaaS/POS browse, desktop/tablet three-pane Command Center.
+- Run npm.cmd run typecheck, npm.cmd run lint, npm.cmd run build after implementation.
 - Only push when I say "可以推送".
+
+Current status:
+Menu V2 Phase 2.6 desktop final small polish is complete locally. Typecheck, lint, and build passed. There are local modified files from Menu V2 work. Do not revert them.
 ```

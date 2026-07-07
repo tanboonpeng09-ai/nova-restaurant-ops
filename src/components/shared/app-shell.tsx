@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Moon, Sun } from "lucide-react";
 import { Toaster } from "sonner";
 import { restaurantConfig } from "@/config/restaurant";
@@ -10,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [light, setLight] = useState(false);
+  const pathname = usePathname();
+  const isCustomerMenu = pathname === "/menu";
 
   useEffect(() => {
     document.documentElement.classList.toggle("light", light);
@@ -17,7 +20,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.08] bg-ink/[0.82] backdrop-blur-2xl light:border-black/[0.07] light:bg-cream/[0.88]">
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 border-b border-white/[0.08] bg-ink/[0.82] backdrop-blur-2xl light:border-black/[0.07] light:bg-cream/[0.88]",
+          isCustomerMenu && "hidden"
+        )}
+      >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3" aria-label={`${restaurantConfig.shortName} home`}>
             <span className="grid size-10 place-items-center rounded-button bg-ember text-white shadow-[0_12px_34px_rgba(255,107,44,0.26)]">
@@ -64,8 +72,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
-      <main className="min-h-screen pt-16">{children}</main>
-      <Toaster richColors position="top-right" />
+      <main className={cn("min-h-screen pt-16", isCustomerMenu && "pt-0")}>{children}</main>
+      <Toaster
+        richColors
+        position="top-right"
+        mobileOffset={{
+          top: 16,
+          bottom: "calc(6.75rem + env(safe-area-inset-bottom))"
+        }}
+      />
     </>
   );
 }

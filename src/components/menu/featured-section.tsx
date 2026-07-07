@@ -1,66 +1,91 @@
 import Image from "next/image";
-import { Plus, Sparkles } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { currency } from "@/lib/utils";
 import type { MenuItem } from "@/types";
 
 export function FeaturedSection({
   items,
-  onAddToCart
+  getItemQuantity,
+  onAddToCart,
+  onDecreaseQuantity
 }: {
   items: MenuItem[];
+  getItemQuantity: (itemId: string) => number;
   onAddToCart: (item: MenuItem) => void;
+  onDecreaseQuantity: (item: MenuItem, quantity: number) => void;
 }) {
   if (items.length === 0) return null;
 
+  const primaryItem = items[0];
+  const quantity = getItemQuantity(primaryItem.id);
+  const isInCart = quantity > 0;
+
   return (
-    <section className="mt-5 lg:hidden" aria-label="Featured dishes">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ember">Featured</p>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight text-white light:text-black">House picks</h2>
-        </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-saffron/10 px-3 py-1.5 text-xs font-semibold text-saffron ring-1 ring-saffron/15">
-          <Sparkles size={13} /> Popular
-        </span>
+    <section className="mt-4 lg:hidden" aria-label="Featured dishes">
+      <div className="mb-2.5">
+        <h2 className="text-[22px] font-bold tracking-[-0.04em] text-slate-950">Featured</h2>
       </div>
-      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
-        {items.map((item) => (
-          <article
-            key={item.id}
-            className="relative min-w-[82%] snap-start overflow-hidden rounded-card bg-white/[0.055] shadow-[0_16px_42px_rgba(0,0,0,0.18)] ring-1 ring-white/[0.075] light:bg-white/88 light:shadow-[0_14px_34px_rgba(40,28,18,0.08)] light:ring-black/[0.055]"
-          >
-            <div className="relative h-44 bg-white/[0.04]">
-              <Image
-                src={item.imageUrl}
-                alt={item.name}
-                fill
-                sizes="82vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(0,0,0,0.64),rgba(0,0,0,0.06)_62%)]" />
-              <span className="absolute left-3 top-3 rounded-full bg-black/52 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-saffron ring-1 ring-white/14 backdrop-blur-md">
-                Chef&apos;s Choice
-              </span>
-            </div>
-            <div className="p-4">
-              <h3 className="text-lg font-semibold leading-tight text-white light:text-black">{item.name}</h3>
-              <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-white/52 light:text-black/54">
-                {item.description}
-              </p>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <p className="text-lg font-semibold text-white light:text-black">{currency(item.price)}</p>
+      <article className="overflow-hidden rounded-[18px] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/80">
+        <div className="relative h-36 bg-slate-100">
+          <Image
+            src={primaryItem.imageUrl}
+            alt={primaryItem.name}
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+          <span className="absolute left-3 top-3 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_8px_18px_rgba(245,158,11,0.28)]">
+            Popular
+          </span>
+        </div>
+        <div className="grid grid-cols-[1fr_auto] gap-3 p-3.5">
+          <div className="min-w-0">
+            <h3 className="line-clamp-1 text-[20px] font-bold tracking-[-0.04em] text-slate-950">
+              {primaryItem.name}
+            </h3>
+            <p className="mt-1 line-clamp-2 text-[14px] leading-5 text-slate-600">
+              {primaryItem.description}
+            </p>
+          </div>
+          <div className="flex flex-col items-end justify-between gap-3">
+            <p className="text-[20px] font-bold tracking-[-0.04em] text-slate-950">
+              {currency(primaryItem.price)}
+            </p>
+            {isInCart ? (
+              <div className="inline-flex h-11 items-center rounded-full bg-slate-950 p-1 text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]">
                 <button
                   type="button"
-                  onClick={() => onAddToCart(item)}
-                  className="pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-ember px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgb(var(--color-primary)_/_0.22)]"
+                  onClick={() => onDecreaseQuantity(primaryItem, quantity)}
+                  className="pressable grid size-9 place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                  aria-label={`Decrease ${primaryItem.name}`}
                 >
-                  <Plus size={15} /> Add
+                  <Minus size={15} />
+                </button>
+                <span className="min-w-7 text-center text-sm font-black tabular-nums">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onAddToCart(primaryItem)}
+                  className="pressable grid size-9 place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                  aria-label={`Increase ${primaryItem.name}`}
+                >
+                  <Plus size={15} />
                 </button>
               </div>
-            </div>
-          </article>
-        ))}
-      </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onAddToCart(primaryItem)}
+                className="pressable grid size-11 place-items-center rounded-full bg-slate-950 text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition active:scale-[0.98]"
+                aria-label={`Add ${primaryItem.name}`}
+              >
+                <Plus size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+      </article>
     </section>
   );
 }

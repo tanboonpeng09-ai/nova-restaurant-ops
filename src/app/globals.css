@@ -18,6 +18,8 @@
   --motion-easing: ease;
   --background: #0e0e0e;
   --foreground: #f7f0e8;
+  --font-inter: Inter;
+  --font-playfair: Georgia;
 }
 
 * {

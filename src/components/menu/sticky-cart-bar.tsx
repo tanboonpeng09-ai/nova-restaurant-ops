@@ -1,36 +1,33 @@
-import { ReceiptText } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { currency } from "@/lib/utils";
 
 export function StickyCartBar({
   itemCount,
   subtotal,
-  isSubmitting,
-  onSubmitOrder
+  onReviewOrder
 }: {
   itemCount: number;
   subtotal: number;
-  isSubmitting: boolean;
-  onSubmitOrder: () => void;
+  onReviewOrder: () => void;
 }) {
   if (itemCount === 0) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-40 rounded-[24px] border border-white/[0.1] bg-ink/96 p-3 shadow-[0_18px_48px_rgba(0,0,0,0.36)] backdrop-blur-xl light:border-black/[0.08] light:bg-cream/96 lg:hidden">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 pl-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/44 light:text-black/45">
-            {itemCount} {itemCount === 1 ? "item" : "items"} in order
-          </p>
-          <p className="mt-0.5 text-lg font-semibold text-white light:text-black">{currency(subtotal)}</p>
+    <div className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 rounded-full bg-slate-950 p-2 shadow-[0_18px_44px_rgba(15,23,42,0.28)] ring-1 ring-white/10 lg:hidden">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+        <div className="min-w-[58px] pl-3 text-[11px] font-black uppercase tracking-[0.16em] text-white/72">
+          {itemCount} {itemCount === 1 ? "item" : "items"}
         </div>
         <button
           type="button"
-          onClick={onSubmitOrder}
-          disabled={isSubmitting}
-          className="pressable inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(255,107,44,0.24)] disabled:cursor-not-allowed disabled:opacity-55"
+          onClick={onReviewOrder}
+          className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-emerald-500 px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(16,185,129,0.28)] transition duration-200 active:scale-[0.98]"
         >
-          <ReceiptText size={16} /> {isSubmitting ? "Sending" : "Place order"}
+          <ShoppingBag size={15} /> Review Order
         </button>
+        <p className="pr-3 text-right text-base font-black tabular-nums tracking-[-0.03em] text-white">
+          {currency(subtotal)}
+        </p>
       </div>
     </div>
   );
