@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { createOrderAction, createStaffRequestAction } from "@/actions/order-actions";
 import { CartCommandCenter } from "@/components/menu/cart-command-center";
 import { CategoryNavigation } from "@/components/menu/category-navigation";
+import { FeaturedSection } from "@/components/menu/featured-section";
 import { ItemCard } from "@/components/menu/item-card";
+import { MobileMenuHeader } from "@/components/menu/mobile-menu-header";
 import { StickyCartBar } from "@/components/menu/sticky-cart-bar";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import { useRestaurantStore } from "@/store/restaurant-store";
@@ -43,6 +45,10 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
   const visibleItems = useMemo(
     () => menuItems.filter((item) => item.categoryId === selectedCategory),
     [menuItems, selectedCategory]
+  );
+  const featuredItems = useMemo(
+    () => menuItems.filter((item) => item.isFeatured && item.isAvailable).slice(0, 4),
+    [menuItems]
   );
   const subtotal = cart.reduce((total, item) => total + item.menuItem.price * item.quantity, 0);
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -197,7 +203,9 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       }`}
     >
       <section className="min-w-0">
-        <div className="relative overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] p-5 shadow-[0_18px_52px_rgba(0,0,0,0.16)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_16px_40px_rgba(40,28,18,0.08)] sm:p-6 lg:p-8">
+        <MobileMenuHeader settings={settings} tableNumber={tableNumber} />
+
+        <div className="relative hidden overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.035] p-5 shadow-[0_18px_52px_rgba(0,0,0,0.16)] light:border-black/[0.06] light:bg-white/88 light:shadow-[0_16px_40px_rgba(40,28,18,0.08)] sm:p-6 lg:block lg:p-8">
           <Image
             src={settings.heroImage}
             alt={`${settings.name} dining room`}
@@ -249,13 +257,29 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
           </div>
         </div>
 
+        <FeaturedSection items={featuredItems} onAddToCart={handleAddToCart} />
+
         <CategoryNavigation
           categories={categories}
           selectedCategory={selectedCategory}
           onSelectCategory={setActiveCategory}
         />
 
-        <div id="menu-list" className="mt-7 grid gap-5 md:grid-cols-2">
+        <div className="mt-5 flex items-end justify-between gap-4 lg:hidden">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/36 light:text-black/38">
+              Browse
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white light:text-black">
+              {categories.find((category) => category.id === selectedCategory)?.name ?? "Menu"}
+            </h2>
+          </div>
+          <p className="text-sm font-medium text-white/45 light:text-black/45">
+            {visibleItems.length} {visibleItems.length === 1 ? "item" : "items"}
+          </p>
+        </div>
+
+        <div id="menu-list" className="mt-4 grid gap-3 md:mt-7 md:gap-5 md:grid-cols-2">
           {isRefreshing && visibleItems.length === 0 ? (
             Array.from({ length: 4 }, (_, index) => (
               <div key={index} className="rounded-card bg-white/[0.045] p-3 light:bg-white/82">

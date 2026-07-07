@@ -12,11 +12,11 @@ export function ItemCard({
 }) {
   return (
     <article
-      className={`group overflow-hidden rounded-card bg-white/[0.05] p-3.5 shadow-[0_18px_48px_rgba(0,0,0,0.16)] ring-1 ring-white/[0.075] transition duration-200 md:hover:-translate-y-1 md:hover:bg-white/[0.065] md:hover:shadow-[0_24px_64px_rgba(0,0,0,0.22)] light:bg-white/88 light:shadow-[0_16px_40px_rgba(40,28,18,0.09)] light:ring-black/[0.055] light:md:hover:bg-white ${
+      className={`group flex gap-3 overflow-hidden rounded-[20px] bg-white/[0.048] p-3 shadow-[0_12px_34px_rgba(0,0,0,0.13)] ring-1 ring-white/[0.07] transition duration-200 md:block md:rounded-card md:p-3.5 md:shadow-[0_18px_48px_rgba(0,0,0,0.16)] md:hover:-translate-y-1 md:hover:bg-white/[0.065] md:hover:shadow-[0_24px_64px_rgba(0,0,0,0.22)] light:bg-white/88 light:shadow-[0_12px_30px_rgba(40,28,18,0.07)] light:ring-black/[0.055] light:md:hover:bg-white ${
         item.isAvailable ? "" : "opacity-80"
       }`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] bg-white/[0.04]">
+      <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-[18px] bg-white/[0.04] md:aspect-[4/3] md:h-auto md:w-auto md:rounded-[20px]">
         <Image
           src={item.imageUrl}
           alt={item.name}
@@ -27,7 +27,7 @@ export function ItemCard({
           }`}
         />
         {item.isFeatured && item.isAvailable && (
-          <span className="absolute left-3 top-3 rounded-full bg-black/56 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-saffron ring-1 ring-white/14 backdrop-blur-md">
+          <span className="absolute left-2 top-2 rounded-full bg-black/56 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-saffron ring-1 ring-white/14 backdrop-blur-md md:left-3 md:top-3 md:px-3 md:py-1.5 md:text-[10px] md:tracking-[0.18em]">
             Chef&apos;s Choice
           </span>
         )}
@@ -39,22 +39,22 @@ export function ItemCard({
           </div>
         )}
       </div>
-      <div className="flex min-h-[174px] flex-col px-2 pb-2 pt-5">
-        <h2 className="text-[1.45rem] font-semibold leading-tight tracking-tight text-white light:text-black">
+      <div className="flex min-h-28 min-w-0 flex-1 flex-col py-0.5 md:min-h-[174px] md:px-2 md:pb-2 md:pt-5">
+        <h2 className="line-clamp-1 text-[1.05rem] font-semibold leading-tight tracking-tight text-white light:text-black md:text-[1.45rem]">
           {item.name}
         </h2>
-        <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/52 light:text-black/54">
+        <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-white/50 light:text-black/54 md:mt-3 md:leading-6">
           {item.description}
         </p>
-        <div className="mt-auto flex items-center justify-between gap-4 pt-7">
-          <p className="text-[1.35rem] font-semibold tracking-tight text-white light:text-black">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3 md:gap-4 md:pt-7">
+          <p className="text-base font-semibold tracking-tight text-white light:text-black md:text-[1.35rem]">
             {currency(item.price)}
           </p>
           <button
             type="button"
             disabled={!item.isAvailable}
             onClick={() => onAddToCart(item)}
-            className="pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-ember px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(255,107,44,0.22)] transition md:hover:-translate-y-0.5 md:hover:bg-[#ff7c42] disabled:cursor-not-allowed disabled:bg-white/[0.12] disabled:text-white/48 disabled:shadow-none light:disabled:bg-black/[0.08] light:disabled:text-black/42"
+            className="pressable inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full bg-ember px-3.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(255,107,44,0.2)] transition md:min-h-10 md:gap-2 md:px-4 md:hover:-translate-y-0.5 md:hover:bg-[#ff7c42] disabled:cursor-not-allowed disabled:bg-white/[0.12] disabled:text-white/48 disabled:shadow-none light:disabled:bg-black/[0.08] light:disabled:text-black/42"
           >
             <Plus size={16} /> {item.isAvailable ? "Add" : "Sold out"}
           </button>
