@@ -2,7 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, ChefHat, LockKeyhole, Volume2 } from "lucide-react";
+import {
+  Bell,
+  ChefHat,
+  CheckCircle2,
+  Clock3,
+  Flame,
+  LockKeyhole,
+  ReceiptText,
+  TimerReset,
+  Volume2,
+  Wifi,
+  WifiOff
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   advanceOrderStatusAction,
@@ -10,10 +22,62 @@ import {
   verifyKitchenPinAction
 } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { currency, statusLabel } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
+import type { OrderStatus } from "@/types";
+
+const statusStyles: Record<OrderStatus, string> = {
+  new: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  preparing: "bg-amber-50 text-amber-700 ring-amber-200",
+  ready: "bg-sky-50 text-sky-700 ring-sky-200",
+  completed: "bg-slate-100 text-slate-500 ring-slate-200"
+};
+
+const statusAccent: Record<OrderStatus, string> = {
+  new: "bg-emerald-500",
+  preparing: "bg-amber-500",
+  ready: "bg-sky-500",
+  completed: "bg-slate-400"
+};
+
+const nextActionLabel: Record<OrderStatus, string> = {
+  new: "Start preparing",
+  preparing: "Mark ready",
+  ready: "Complete order",
+  completed: "Completed"
+};
+
+const kitchenLanes: Array<{
+  status: Exclude<OrderStatus, "completed">;
+  title: string;
+  empty: string;
+}> = [
+  {
+    status: "new",
+    title: "New",
+    empty: "No new orders."
+  },
+  {
+    status: "preparing",
+    title: "Preparing",
+    empty: "Nothing is being prepared."
+  },
+  {
+    status: "ready",
+    title: "Ready",
+    empty: "No orders ready for pickup."
+  }
+];
+
+function orderCreatedTime(createdAt: string) {
+  const date = new Date(createdAt);
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
 
 export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: RestaurantSnapshot }) {
   const [pin, setPin] = useState("");
@@ -35,6 +99,14 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
   const activeOrders = useMemo(
     () => orders.filter((order) => order.status !== "completed"),
     [orders]
+  );
+  const ordersByStatus = useMemo(
+    () =>
+      kitchenLanes.map((lane) => ({
+        ...lane,
+        orders: activeOrders.filter((order) => order.status === lane.status)
+      })),
+    [activeOrders]
   );
   const openRequests = staffRequests.filter((request) => request.status === "open");
 
@@ -75,174 +147,264 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
 
   if (!unlocked) {
     return (
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-lg items-center px-4 py-12">
-        <div className="mesh-panel w-full rounded-card p-7 sm:p-8">
-          <div className="grid size-14 place-items-center rounded-button bg-ember text-white shadow-[0_14px_36px_rgba(255,107,44,0.22)]">
-            <LockKeyhole />
+      <div className="min-h-[calc(100vh-4rem)] bg-[#f6f8fb] px-4 py-12 text-slate-950">
+        <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-lg items-center">
+          <div className="w-full rounded-[24px] border border-slate-200 bg-white p-7 shadow-[0_18px_54px_rgba(15,23,42,0.08)] sm:p-8">
+            <div className="grid size-14 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_14px_36px_rgba(15,23,42,0.18)]">
+              <LockKeyhole />
+            </div>
+            <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+              Kitchen Display
+            </p>
+            <h1 className="mt-2 text-[34px] font-bold tracking-[-0.05em] text-slate-950">Kitchen access</h1>
+            <p className="mt-3 leading-7 text-slate-500">
+              Enter the owner-generated kitchen PIN. Demo PIN: <strong className="text-slate-950">123456</strong>.
+            </p>
+            <input
+              value={pin}
+              onChange={(event) => setPin(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void unlockKitchen();
+              }}
+              className="mt-6 h-14 w-full rounded-button border border-slate-200 bg-slate-50 px-4 text-lg font-bold tracking-[0.28em] text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+              placeholder="123456"
+              aria-label="Kitchen PIN"
+            />
+            <button
+              type="button"
+              onClick={() => void unlockKitchen()}
+              disabled={isUnlocking}
+              className="pressable mt-4 inline-flex min-h-14 w-full items-center justify-center rounded-button bg-emerald-500 px-5 py-4 font-bold text-white shadow-[0_18px_44px_rgba(16,185,129,0.24)] hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              {isUnlocking ? "Checking..." : "Enter Kitchen"}
+            </button>
           </div>
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white light:text-black">Kitchen access</h1>
-          <p className="mt-3 leading-7 text-white/56 light:text-black/56">
-            Enter the owner-generated kitchen PIN. Demo PIN: <strong>123456</strong>.
-          </p>
-          <input
-            value={pin}
-            onChange={(event) => setPin(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") void unlockKitchen();
-            }}
-            className="input-surface mt-6 w-full rounded-button px-4 py-4 text-lg tracking-[0.28em] text-white outline-none light:text-black"
-            placeholder="123456"
-            aria-label="Kitchen PIN"
-          />
-          <button
-            type="button"
-            onClick={() => void unlockKitchen()}
-            disabled={isUnlocking}
-            className="pressable mt-4 w-full rounded-button bg-ember px-5 py-4 font-semibold text-white shadow-[0_16px_40px_rgba(255,107,44,0.24)]"
-          >
-            {isUnlocking ? "Checking..." : "Enter Kitchen"}
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:py-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-ember">Kitchen display</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white light:text-black">Active orders</h1>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f8fb] px-4 py-5 text-slate-950 sm:px-6 lg:py-6">
+      <div className="mx-auto max-w-[1500px]">
+        <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+            <div className="flex min-w-0 items-center gap-4">
+              <span className="grid size-12 shrink-0 place-items-center rounded-[18px] bg-slate-950 text-white">
+                <ChefHat size={22} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                  Kitchen Display
+                </p>
+                <h1 className="mt-1 truncate text-[34px] font-bold tracking-[-0.05em] text-slate-950">
+                  Active orders
+                </h1>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-600">
+                {isRealtimeConnected ? (
+                  <Wifi size={16} className="text-emerald-500" />
+                ) : (
+                  <WifiOff size={16} className="text-amber-500" />
+                )}
+                {syncError ?? (isRefreshing ? "Syncing orders..." : isRealtimeConnected ? "Live sync on" : "Reconnecting")}
+              </div>
+              <button
+                type="button"
+                onClick={enableNotifications}
+                className="pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:bg-slate-50"
+              >
+                {notificationEnabled ? <Volume2 size={18} /> : <Bell size={18} />}
+                {notificationEnabled ? "Alerts On" : "Enable Alerts"}
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={enableNotifications}
-            className="pressable inline-flex items-center justify-center gap-2 rounded-button border border-white/[0.09] bg-white/[0.065] px-4 py-3 font-semibold text-white light:bg-white/78 light:text-black"
-          >
-            {notificationEnabled ? <Volume2 size={18} /> : <Bell size={18} />}
-            {notificationEnabled ? "Alerts On" : "Enable Alerts"}
-          </button>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Active</p>
+              <p className="mt-1 text-2xl font-bold text-slate-950">{activeOrders.length}</p>
+            </div>
+            <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Staff calls</p>
+              <p className="mt-1 text-2xl font-bold text-slate-950">{openRequests.length}</p>
+            </div>
+            <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Mode</p>
+              <p className="mt-1 text-2xl font-bold text-slate-950">Service</p>
+            </div>
+          </div>
         </div>
-        <p className="mt-3 text-sm text-white/45 light:text-black/45">
-          {syncError ??
-            (isRefreshing
-              ? "Syncing latest orders..."
-              : isRealtimeConnected
-                ? "Realtime connected."
-                : "Realtime reconnecting...")}
-        </p>
 
         {openRequests.length > 0 && (
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            {openRequests.map((request) => (
-              <div key={request.id} className="rounded-card border border-saffron/20 bg-saffron/[0.08] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-saffron">Staff call</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white light:text-black">
-                  Table {request.tableNumber}: {statusLabel(request.type)}
-                </h2>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (busyRequestId === request.id) return;
-                    setBusyRequestId(request.id);
-                    try {
-                      await resolveStaffRequestAction({ requestId: request.id, kitchenPin: pin });
-                      await refreshRequests();
-                      toast.success("Request resolved.");
-                    } catch (error) {
-                      toast.error(error instanceof Error ? error.message : "Could not resolve request.");
-                    } finally {
-                      setBusyRequestId(null);
-                    }
-                  }}
-                  disabled={busyRequestId === request.id}
-                  className="pressable mt-4 rounded-button bg-white px-4 py-2 text-sm font-semibold text-black"
-                >
-                  {busyRequestId === request.id ? "Resolving..." : "Mark resolved"}
-                </button>
+          <section className="mt-4 rounded-[18px] border border-amber-200 bg-amber-50/80 p-3 shadow-[0_8px_22px_rgba(120,53,15,0.04)]">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+              <div className="flex shrink-0 items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-amber-700">
+                <Bell size={17} />
+                Staff requests
+                <span className="grid size-6 place-items-center rounded-full bg-amber-200 text-xs text-amber-900">
+                  {openRequests.length}
+                </span>
               </div>
-            ))}
-          </div>
+              <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 xl:pb-0">
+              {openRequests.map((request) => (
+                <div key={request.id} className="flex min-w-[260px] items-center justify-between gap-3 rounded-[14px] border border-amber-200 bg-white px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-slate-950">
+                      Table {request.tableNumber}: {statusLabel(request.type)}
+                    </p>
+                    <p className="text-xs font-semibold text-amber-700">Open staff call</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (busyRequestId === request.id) return;
+                      setBusyRequestId(request.id);
+                      try {
+                        await resolveStaffRequestAction({ requestId: request.id, kitchenPin: pin });
+                        await refreshRequests();
+                        toast.success("Request resolved.");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Could not resolve request.");
+                      } finally {
+                        setBusyRequestId(null);
+                      }
+                    }}
+                    disabled={busyRequestId === request.id}
+                    className="pressable inline-flex min-h-9 shrink-0 items-center justify-center rounded-full bg-amber-100 px-3 text-xs font-black text-amber-800 hover:bg-amber-200 disabled:cursor-not-allowed disabled:text-slate-400"
+                  >
+                    {busyRequestId === request.id ? "Resolving..." : "Mark resolved"}
+                  </button>
+                </div>
+              ))}
+              </div>
+            </div>
+          </section>
         )}
 
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          {isRefreshing && activeOrders.length === 0 ? (
-            Array.from({ length: 2 }, (_, index) => (
-              <div key={index} className="mesh-panel rounded-card p-5">
-                <div className="h-8 w-32 animate-pulse rounded-full bg-white/[0.07] light:bg-black/[0.06]" />
-                <div className="mt-4 h-14 w-56 animate-pulse rounded-full bg-white/[0.07] light:bg-black/[0.06]" />
-                <div className="mt-6 space-y-3">
-                  <div className="h-14 animate-pulse rounded-2xl bg-white/[0.06] light:bg-black/[0.05]" />
-                  <div className="h-14 animate-pulse rounded-2xl bg-white/[0.06] light:bg-black/[0.05]" />
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {ordersByStatus.map((lane) => (
+            <section
+              key={lane.status}
+              className="min-w-0 rounded-[24px] border border-slate-200 bg-slate-100/70 p-3 shadow-[0_8px_24px_rgba(15,23,42,0.035)]"
+            >
+              <div className="flex items-center justify-between gap-3 px-1 pb-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className={`h-3 w-3 shrink-0 rounded-full ${statusAccent[lane.status]}`} />
+                  <h2 className="truncate text-lg font-black tracking-[-0.04em] text-slate-950">{lane.title}</h2>
                 </div>
+                <span className="grid size-8 place-items-center rounded-full bg-white text-sm font-black text-slate-700 ring-1 ring-slate-200">
+                  {lane.orders.length}
+                </span>
               </div>
-            ))
-          ) : activeOrders.length === 0 ? (
-            <div className="mesh-panel rounded-card p-10 text-center">
-              <ChefHat className="mx-auto text-ember" size={42} />
-              <h2 className="mt-4 text-2xl font-semibold">No active orders</h2>
-              <p className="mt-2 text-white/52 light:text-black/52">New orders will appear here instantly.</p>
-            </div>
-          ) : (
-            activeOrders.map((order) => (
-              <article key={order.id} className="interactive-card mesh-panel rounded-card p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/42 light:text-black/44">
-                      {order.orderNumber}
-                    </p>
-                    <h2 className="mt-1 text-5xl font-semibold tracking-tight text-white light:text-black">
-                      Table {order.tableNumber}
-                    </h2>
-                    <p className="mt-2 text-sm text-white/50 light:text-black/50">
-                      {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}
-                    </p>
-                  </div>
-                  <StatusBadge status={order.status} />
-                </div>
-                <div className="mt-5 space-y-3">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="surface-soft flex items-center justify-between rounded-2xl p-4 text-lg">
-                      <span>
-                        <strong>{item.quantity}x</strong> {item.itemName}
-                      </span>
-                      <span className="text-white/55 light:text-black/55">{currency(item.lineTotal)}</span>
+
+              <div className="space-y-3">
+                {isRefreshing && activeOrders.length === 0 ? (
+                  <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-[0_8px_22px_rgba(15,23,42,0.045)]">
+                    <div className="h-7 w-32 animate-pulse rounded-full bg-slate-100" />
+                    <div className="mt-4 h-12 w-48 animate-pulse rounded-full bg-slate-100" />
+                    <div className="mt-5 space-y-2">
+                      <div className="h-14 animate-pulse rounded-[14px] bg-slate-100" />
+                      <div className="h-14 animate-pulse rounded-[14px] bg-slate-100" />
                     </div>
-                  ))}
-                </div>
-                {order.notes && (
-                  <p className="mt-4 rounded-2xl border border-ember/20 bg-ember/[0.08] p-4 text-sm leading-6 text-orange-100 light:text-orange-700">
-                    {order.notes}
-                  </p>
+                  </div>
+                ) : lane.orders.length === 0 ? (
+                  <div className="rounded-[20px] border border-dashed border-slate-300 bg-white/70 p-6 text-center">
+                    <ChefHat className="mx-auto text-slate-300" size={30} />
+                    <p className="mt-3 text-sm font-bold text-slate-500">{lane.empty}</p>
+                  </div>
+                ) : (
+                  lane.orders.map((order) => (
+                    <article
+                      key={order.id}
+                      className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)]"
+                    >
+                      <div className={`h-1.5 ${statusAccent[order.status]}`} />
+                      <div className="p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                              <ReceiptText size={14} />
+                              {order.orderNumber}
+                            </p>
+                            <h3 className="mt-2 text-[38px] font-black leading-none tracking-[-0.06em] text-slate-950">
+                              Table {order.tableNumber}
+                            </h3>
+                          </div>
+                          <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] ring-1 ${statusStyles[order.status]}`}>
+                            {statusLabel(order.status)}
+                          </span>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <div className="rounded-[14px] border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                              <Clock3 size={13} /> Time
+                            </p>
+                            <p className="mt-1 text-sm font-bold text-slate-800">{orderCreatedTime(order.createdAt)}</p>
+                          </div>
+                          <div className="rounded-[14px] border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                              <TimerReset size={13} /> Elapsed
+                            </p>
+                            <p className="mt-1 text-sm font-bold text-slate-800">
+                              {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between gap-3 rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_3px_10px_rgba(15,23,42,0.025)]">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <span className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-slate-950 text-base font-black text-white">
+                                  {item.quantity}x
+                                </span>
+                                <span className="min-w-0 text-base font-bold leading-6 text-slate-950">{item.itemName}</span>
+                              </div>
+                              <span className="shrink-0 text-sm font-bold tabular-nums text-slate-500">{currency(item.lineTotal)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {order.notes && (
+                          <div className="mt-4 rounded-[16px] border border-amber-200 bg-amber-50 p-4">
+                            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-amber-700">
+                              <Flame size={14} /> Kitchen notes
+                            </p>
+                            <p className="mt-2 text-sm font-semibold leading-6 text-amber-900">{order.notes}</p>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (busyOrderId === order.id) return;
+                            setBusyOrderId(order.id);
+                            try {
+                              await advanceOrderStatusAction({
+                                orderId: order.id,
+                                currentStatus: order.status,
+                                kitchenPin: pin
+                              });
+                              await refreshOrders();
+                              toast.success("Order status updated.");
+                            } catch (error) {
+                              toast.error(error instanceof Error ? error.message : "Could not update status.");
+                            } finally {
+                              setBusyOrderId(null);
+                            }
+                          }}
+                          disabled={busyOrderId === order.id}
+                          className="pressable mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button bg-emerald-500 px-5 py-3.5 text-base font-bold text-white shadow-[0_16px_36px_rgba(16,185,129,0.22)] hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                        >
+                          <CheckCircle2 size={19} />
+                          {busyOrderId === order.id ? "Updating..." : nextActionLabel[order.status]}
+                        </button>
+                      </div>
+                    </article>
+                  ))
                 )}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (busyOrderId === order.id) return;
-                    setBusyOrderId(order.id);
-                    try {
-                      await advanceOrderStatusAction({
-                        orderId: order.id,
-                        currentStatus: order.status,
-                        kitchenPin: pin
-                      });
-                      await refreshOrders();
-                      toast.success("Order status updated.");
-                    } catch (error) {
-                      toast.error(error instanceof Error ? error.message : "Could not update status.");
-                    } finally {
-                      setBusyOrderId(null);
-                    }
-                  }}
-                  disabled={busyOrderId === order.id}
-                  className="pressable mt-5 w-full rounded-button bg-ember px-5 py-4 text-lg font-semibold text-white shadow-[0_16px_40px_rgba(255,107,44,0.22)]"
-                >
-                  {busyOrderId === order.id ? "Updating..." : "Move to next status"}
-                </button>
-              </article>
-            ))
-          )}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
     </div>
