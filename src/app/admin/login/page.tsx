@@ -1,3 +1,4 @@
+import { LockKeyhole } from "lucide-react";
 import { signInAction } from "@/actions/admin-actions";
 
 export const dynamic = "force-dynamic";
@@ -10,43 +11,71 @@ export default async function Page({
   const { error } = await searchParams;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-12">
-      <form action={signInAction} className="mesh-panel w-full rounded-card p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.26em] text-ember">Admin login</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white light:text-black">Owner access</h1>
-        <p className="mt-3 leading-7 text-white/56 light:text-black/56">
-          Sign in with the Supabase admin user connected to `admin_users`.
-        </p>
-        {error && (
-          <p className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/[0.08] p-3 text-sm text-rose-100 light:text-rose-700">
-            {error}
+    <div className="light min-h-[calc(100vh-4rem)] bg-[#f5f7fb] px-4 py-12 text-slate-950">
+      <div className="mx-auto grid min-h-[calc(100vh-10rem)] max-w-5xl items-center gap-8 lg:grid-cols-[1fr_440px]">
+        <section className="hidden lg:block">
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-white">
+            Restaurant OS
+          </span>
+          <h1 className="mt-5 max-w-xl text-5xl font-black tracking-[-0.055em] text-slate-950">
+            Owner cockpit for table service, kitchen flow, and live operations.
+          </h1>
+          <p className="mt-5 max-w-lg text-base font-medium leading-8 text-slate-500">
+            Sign in to manage ordering state, menu availability, table tools, staff calls, and operational reporting.
           </p>
-        )}
-        <label className="mt-6 block text-sm font-semibold text-white/70 light:text-black/70">
-          Email
-          <input
-            name="email"
-            type="email"
-            required
-            className="input-surface mt-2 w-full rounded-button px-4 py-3 text-white outline-none light:text-black"
-          />
-        </label>
-        <label className="mt-4 block text-sm font-semibold text-white/70 light:text-black/70">
-          Password
-          <input
-            name="password"
-            type="password"
-            required
-            className="input-surface mt-2 w-full rounded-button px-4 py-3 text-white outline-none light:text-black"
-          />
-        </label>
-        <button
-          type="submit"
-          className="pressable mt-6 w-full rounded-button bg-ember px-5 py-4 font-semibold text-white shadow-[0_16px_40px_rgba(255,107,44,0.24)]"
+          <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
+            {["Orders", "Menu", "Tables"].map((label) => (
+              <div key={label} className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{label}</p>
+                <div className="mt-4 h-2 rounded-full bg-emerald-400" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <form
+          action={signInAction}
+          className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8"
         >
-          Sign in
-        </button>
-      </form>
+          <div className="grid size-12 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_16px_38px_rgba(15,23,42,0.16)]">
+            <LockKeyhole size={22} />
+          </div>
+          <p className="mt-6 text-xs font-black uppercase tracking-[0.18em] text-slate-400">Admin login</p>
+          <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">Owner access</h2>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
+            Sign in with the Supabase admin user connected to <code className="font-bold text-slate-700">admin_users</code>.
+          </p>
+          {error && (
+            <p className="mt-4 rounded-[18px] border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
+              {error}
+            </p>
+          )}
+          <label className="mt-6 block text-sm font-black text-slate-700">
+            Email
+            <input
+              name="email"
+              type="email"
+              required
+              className="mt-2 min-h-12 w-full rounded-button border border-slate-200 bg-slate-50 px-4 text-slate-950 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+            />
+          </label>
+          <label className="mt-4 block text-sm font-black text-slate-700">
+            Password
+            <input
+              name="password"
+              type="password"
+              required
+              className="mt-2 min-h-12 w-full rounded-button border border-slate-200 bg-slate-50 px-4 text-slate-950 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+            />
+          </label>
+          <button
+            type="submit"
+            className="pressable mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-button bg-emerald-500 px-5 py-3 font-black text-white shadow-[0_18px_44px_rgba(16,185,129,0.22)] hover:bg-emerald-600"
+          >
+            Sign in
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

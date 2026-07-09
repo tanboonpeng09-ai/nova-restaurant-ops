@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient as createRawSupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured } from "@/lib/env";
-import { createClient } from "@/lib/supabase/client";
 import {
   fetchBrowserSnapshot,
   fetchOrders,
@@ -14,58 +15,137 @@ import type { RestaurantSnapshot } from "@/services/restaurant-service";
 type RefreshKind = "all" | "orders" | "requests" | "tables";
 
 export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
+  const router = useRouter();
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(!isSupabaseConfigured());
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const postCommitRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const orderFallbackRefreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingRefreshKindsRef = useRef<Set<RefreshKind>>(new Set());
+  const postCommitRefreshKindsRef = useRef<Set<RefreshKind>>(new Set());
   const refreshingRef = useRef(false);
   const mountedRef = useRef(false);
+  const channelNameRef = useRef(`restaurant-ops-${Math.random().toString(36).slice(2)}`);
 
-  const runRefresh = useCallback(async (kind: RefreshKind) => {
-    if (!isSupabaseConfigured() || refreshingRef.current) return;
+  const flushPendingRefreshes = useCallback(async () => {
+    if (!isSupabaseConfigured()) return;
+
+    if (refreshingRef.current) {
+      return;
+    }
+
+    if (pendingRefreshKindsRef.current.size === 0) return;
 
     refreshingRef.current = true;
     setIsRefreshing(true);
+    let refreshFailed = false;
     try {
-      if (kind === "all") {
-        const nextSnapshot = await fetchBrowserSnapshot();
-        if (mountedRef.current) setSnapshot(nextSnapshot);
-      }
+      while (pendingRefreshKindsRef.current.size > 0) {
+        const pendingKinds = new Set(pendingRefreshKindsRef.current);
+        pendingRefreshKindsRef.current.clear();
 
-      if (kind === "orders") {
-        const orders = await fetchOrders();
-        if (mountedRef.current) setSnapshot((current) => ({ ...current, orders }));
-      }
+        if (pendingKinds.has("all")) {
+          const nextSnapshot = await fetchBrowserSnapshot();
+          if (mountedRef.current) setSnapshot(nextSnapshot);
+          continue;
+        }
 
-      if (kind === "requests") {
-        const staffRequests = await fetchStaffRequests();
-        if (mountedRef.current) setSnapshot((current) => ({ ...current, staffRequests }));
-      }
+        const [orders, staffRequests, tables] = await Promise.all([
+          pendingKinds.has("orders") ? fetchOrders() : Promise.resolve(null),
+          pendingKinds.has("requests") ? fetchStaffRequests() : Promise.resolve(null),
+          pendingKinds.has("tables") ? fetchTables() : Promise.resolve(null)
+        ]);
 
-      if (kind === "tables") {
-        const tables = await fetchTables();
-        if (mountedRef.current) setSnapshot((current) => ({ ...current, tables }));
+        if (mountedRef.current) {
+          setSnapshot((current) => {
+            return {
+              ...current,
+              ...(orders ? { orders } : {}),
+              ...(staffRequests ? { staffRequests } : {}),
+              ...(tables ? { tables } : {})
+            };
+          });
+        }
       }
 
       if (mountedRef.current) setSyncError(null);
     } catch {
-      if (mountedRef.current) setSyncError("Could not sync the latest restaurant data. Retrying...");
+      refreshFailed = true;
+      if (mountedRef.current) {
+        setSyncError("Could not sync the latest restaurant data. Retrying...");
+        router.refresh();
+      }
     } finally {
       refreshingRef.current = false;
       if (mountedRef.current) setIsRefreshing(false);
+
+      if (!refreshFailed && pendingRefreshKindsRef.current.size > 0) {
+        setTimeout(() => {
+          void flushPendingRefreshes();
+        }, 0);
+      }
     }
-  }, []);
+  }, [router]);
+
+  const runRefresh = useCallback(async (kind: RefreshKind) => {
+    if (!isSupabaseConfigured()) return;
+    pendingRefreshKindsRef.current.add(kind);
+    await flushPendingRefreshes();
+  }, [flushPendingRefreshes]);
 
   const scheduleRefresh = useCallback(
     (kind: RefreshKind) => {
       if (!isSupabaseConfigured()) return;
+      pendingRefreshKindsRef.current.add(kind);
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = setTimeout(() => {
-        void runRefresh(kind);
+        refreshTimerRef.current = null;
+        void flushPendingRefreshes();
       }, 250);
     },
-    [runRefresh]
+    [flushPendingRefreshes]
+  );
+
+  const schedulePostCommitRefresh = useCallback(
+    (kind: RefreshKind) => {
+      if (!isSupabaseConfigured()) return;
+      postCommitRefreshKindsRef.current.add(kind);
+
+      if (postCommitRefreshTimerRef.current) clearTimeout(postCommitRefreshTimerRef.current);
+      postCommitRefreshTimerRef.current = setTimeout(() => {
+        postCommitRefreshTimerRef.current = null;
+        postCommitRefreshKindsRef.current.forEach((pendingKind) => {
+          pendingRefreshKindsRef.current.add(pendingKind);
+        });
+        postCommitRefreshKindsRef.current.clear();
+        void flushPendingRefreshes();
+      }, 1000);
+    },
+    [flushPendingRefreshes]
+  );
+
+  const stopOrderFallbackRefresh = useCallback(() => {
+    if (!orderFallbackRefreshTimerRef.current) return;
+    clearInterval(orderFallbackRefreshTimerRef.current);
+    orderFallbackRefreshTimerRef.current = null;
+  }, []);
+
+  const startOrderFallbackRefresh = useCallback(() => {
+    if (orderFallbackRefreshTimerRef.current) return;
+    scheduleRefresh("orders");
+    orderFallbackRefreshTimerRef.current = setInterval(() => {
+      scheduleRefresh("orders");
+    }, 3000);
+  }, [scheduleRefresh]);
+
+  const handleRealtimeEvent = useCallback(
+    (kind: RefreshKind) => {
+      scheduleRefresh(kind);
+      schedulePostCommitRefresh(kind);
+    },
+    [schedulePostCommitRefresh, scheduleRefresh]
   );
 
   const refreshAll = useCallback(async () => {
@@ -89,6 +169,8 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
     return () => {
       mountedRef.current = false;
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      if (postCommitRefreshTimerRef.current) clearTimeout(postCommitRefreshTimerRef.current);
+      if (orderFallbackRefreshTimerRef.current) clearInterval(orderFallbackRefreshTimerRef.current);
     };
   }, []);
 
@@ -99,33 +181,58 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
-    const supabase = createClient();
-    const channel = supabase
-      .channel("restaurant-ops")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => scheduleRefresh("orders"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => scheduleRefresh("orders"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "staff_requests" }, () => scheduleRefresh("requests"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "tables" }, () => scheduleRefresh("tables"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "menu_categories" }, () => scheduleRefresh("all"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "menu_items" }, () => scheduleRefresh("all"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "restaurant_settings" }, () => scheduleRefresh("all"))
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          setIsRealtimeConnected(true);
-          setSyncError(null);
-          scheduleRefresh("all");
-        }
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          setIsRealtimeConnected(false);
-          setSyncError("Realtime connection paused. The dashboard will resync automatically.");
-        }
-      });
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setIsRealtimeConnected(false);
+      setSyncError("Realtime is not configured for this environment.");
+      return;
+    }
+
+    const supabase = createRawSupabaseClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+    const subscriptions: Array<{ table: string; kind: RefreshKind }> = [
+      { table: "orders", kind: "orders" },
+      { table: "order_items", kind: "orders" },
+      { table: "staff_requests", kind: "requests" },
+      { table: "tables", kind: "tables" }
+    ];
+
+    const channels = subscriptions.map(({ table, kind }) => {
+      const channelName = `${channelNameRef.current}-${table}`;
+
+      return supabase
+        .channel(channelName)
+        .on("postgres_changes", { event: "*", schema: "public", table }, () =>
+          handleRealtimeEvent(kind)
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            if (table === "orders") stopOrderFallbackRefresh();
+            setIsRealtimeConnected(true);
+            setSyncError(null);
+            scheduleRefresh("all");
+          }
+
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            if (table === "orders") startOrderFallbackRefresh();
+            setIsRealtimeConnected(false);
+            setSyncError("Realtime connection paused. The dashboard will resync automatically.");
+          }
+        });
+    });
 
     return () => {
-      void supabase.removeChannel(channel);
+      channels.forEach((channel) => {
+        void supabase.removeChannel(channel);
+      });
     };
-  }, [scheduleRefresh]);
+  }, [handleRealtimeEvent, scheduleRefresh, startOrderFallbackRefresh, stopOrderFallbackRefresh]);
 
   return {
     snapshot,
