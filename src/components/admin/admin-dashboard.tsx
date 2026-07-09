@@ -72,14 +72,21 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
     return { total, average, popular, active: orders.filter((order) => order.status !== "completed").length };
   }, [orders]);
 
-  const chartData = useMemo(
-    () =>
-      ["12 PM", "2 PM", "4 PM", "6 PM", "8 PM", "10 PM"].map((hour, index) => ({
-        hour,
-        orders: [2, 4, 3, 8, 11, 6][index]
-      })),
-    []
-  );
+  const chartData = useMemo(() => {
+    const ordersByHour = new Map<number, number>();
+
+    orders.forEach((order) => {
+      const hour = new Date(order.createdAt).getHours();
+      ordersByHour.set(hour, (ordersByHour.get(hour) ?? 0) + 1);
+    });
+
+    return [...ordersByHour.entries()]
+      .sort(([leftHour], [rightHour]) => leftHour - rightHour)
+      .map(([hour, orderCount]) => ({
+        hour: format(new Date(2026, 0, 1, hour), "h a"),
+        orders: orderCount
+      }));
+  }, [orders]);
 
   const filteredOrders = orders.filter(
     (order) =>
@@ -256,25 +263,31 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
               <Panel>
-                <PanelTitle icon={<BarChart3 size={18} />} title="Busy hours" subtitle="Demo demand curve for service planning." />
-                <div className="mt-5 h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.28)" />
-                      <XAxis dataKey="hour" stroke="#64748b" tickLine={false} axisLine={false} />
-                      <YAxis stroke="#64748b" tickLine={false} axisLine={false} />
-                      <Tooltip
-                        cursor={{ fill: "rgba(15,23,42,0.04)" }}
-                        contentStyle={{
-                          borderRadius: 16,
-                          border: "1px solid rgb(226,232,240)",
-                          boxShadow: "0 18px 50px rgba(15,23,42,0.12)"
-                        }}
-                      />
-                      <Bar dataKey="orders" fill={restaurantConfig.theme.colors.primary} radius={[10, 10, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <PanelTitle icon={<BarChart3 size={18} />} title="Busy hours" subtitle="Real order counts from loaded orders." />
+                {chartData.length === 0 ? (
+                  <div className="mt-5 grid h-72 place-items-center rounded-[18px] border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+                    <p className="text-sm font-semibold text-slate-500">No orders yet for this data window.</p>
+                  </div>
+                ) : (
+                  <div className="mt-5 h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.28)" />
+                        <XAxis dataKey="hour" stroke="#64748b" tickLine={false} axisLine={false} />
+                        <YAxis stroke="#64748b" tickLine={false} axisLine={false} allowDecimals={false} />
+                        <Tooltip
+                          cursor={{ fill: "rgba(15,23,42,0.04)" }}
+                          contentStyle={{
+                            borderRadius: 16,
+                            border: "1px solid rgb(226,232,240)",
+                            boxShadow: "0 18px 50px rgba(15,23,42,0.12)"
+                          }}
+                        />
+                        <Bar dataKey="orders" fill={restaurantConfig.theme.colors.primary} radius={[10, 10, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </Panel>
 
               <Panel>
