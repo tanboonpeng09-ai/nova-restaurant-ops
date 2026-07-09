@@ -65,6 +65,59 @@ export type RestaurantConfig = {
     title: string;
     description: string;
   };
+  navigation: {
+    showMenuLink: boolean;
+    showKitchenLink: boolean;
+    showAdminLink: boolean;
+    showTryDemoButton: boolean;
+    menuLabel: string;
+    kitchenLabel: string;
+    adminLabel: string;
+    tryDemoLabel: string;
+  };
+  home: {
+    headline: string;
+    description: string;
+    primaryCtaLabel: string;
+    secondaryCtaLabel: string;
+    proofPoints: string[];
+    previewEyebrow: string;
+    previewServiceLabel: string;
+    previewStatusLabel: string;
+    previewMetrics: Array<{
+      label: string;
+      value: string;
+      detail: string;
+    }>;
+    queueTitle: string;
+    queueDescription: string;
+    queueRows: Array<{
+      table: string;
+      status: string;
+      items: string;
+    }>;
+    averageTicketLabel: string;
+    averageTicketDescription: string;
+    averageTicketValue: string;
+    operationsEyebrow: string;
+    operationsTitle: string;
+    operationsDescription: string;
+    featureCards: Array<{
+      label: string;
+      detail: string;
+      href: string;
+      icon: "qr" | "chef" | "chart";
+    }>;
+    featureCtaLabel: string;
+  };
+  kitchenAccess: {
+    eyebrow: string;
+    title: string;
+    pinHelpText: string;
+    pinPlaceholder: string;
+    submitLabel: string;
+    checkingLabel: string;
+  };
   theme: ThemeConfig;
   demo: {
     tableCount: number;

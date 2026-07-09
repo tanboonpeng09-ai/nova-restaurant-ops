@@ -21,6 +21,7 @@ import {
   resolveStaffRequestAction,
   verifyKitchenPinAction
 } from "@/actions/order-actions";
+import { restaurantConfig } from "@/config/restaurant";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import { isSupabaseConfigured } from "@/lib/env";
 import { currency, statusLabel } from "@/lib/utils";
@@ -146,6 +147,8 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
   }
 
   if (!unlocked) {
+    const kitchenAccess = restaurantConfig.kitchenAccess;
+
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-[#f6f8fb] px-4 py-12 text-slate-950">
         <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-lg items-center">
@@ -154,11 +157,11 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
               <LockKeyhole />
             </div>
             <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              Kitchen Display
+              {kitchenAccess.eyebrow}
             </p>
-            <h1 className="mt-2 text-[34px] font-bold tracking-[-0.05em] text-slate-950">Kitchen access</h1>
+            <h1 className="mt-2 text-[34px] font-bold tracking-[-0.05em] text-slate-950">{kitchenAccess.title}</h1>
             <p className="mt-3 leading-7 text-slate-500">
-              Enter the owner-generated kitchen PIN. Demo PIN: <strong className="text-slate-950">123456</strong>.
+              {kitchenAccess.pinHelpText}
             </p>
             <input
               value={pin}
@@ -167,7 +170,7 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
                 if (event.key === "Enter") void unlockKitchen();
               }}
               className="mt-6 h-14 w-full rounded-button border border-slate-200 bg-slate-50 px-4 text-lg font-bold tracking-[0.28em] text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-              placeholder="123456"
+              placeholder={kitchenAccess.pinPlaceholder}
               aria-label="Kitchen PIN"
             />
             <button
@@ -176,7 +179,7 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
               disabled={isUnlocking}
               className="pressable mt-4 inline-flex min-h-14 w-full items-center justify-center rounded-button bg-emerald-500 px-5 py-4 font-bold text-white shadow-[0_18px_44px_rgba(16,185,129,0.24)] hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
             >
-              {isUnlocking ? "Checking..." : "Enter Kitchen"}
+              {isUnlocking ? kitchenAccess.checkingLabel : kitchenAccess.submitLabel}
             </button>
           </div>
         </div>

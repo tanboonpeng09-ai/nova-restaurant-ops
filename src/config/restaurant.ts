@@ -35,6 +35,75 @@ export const restaurantConfig: RestaurantConfig = {
     title: "NOVA STEAKHOUSE Operations",
     description: "Premium restaurant QR ordering and operations system demo."
   },
+  navigation: {
+    showMenuLink: true,
+    showKitchenLink: true,
+    showAdminLink: true,
+    showTryDemoButton: true,
+    menuLabel: "Menu",
+    kitchenLabel: "Kitchen",
+    adminLabel: "Admin",
+    tryDemoLabel: "Try Demo"
+  },
+  home: {
+    headline: "Premium American Grill, Powered by Modern Restaurant Operations",
+    description:
+      "QR ordering, kitchen visibility, and owner controls in one calm operating system. Built to help premium dining rooms move faster without feeling rushed.",
+    primaryCtaLabel: "Try Customer Demo",
+    secondaryCtaLabel: "View Admin System",
+    proofPoints: ["Table-aware QR menus", "Realtime kitchen workflow", "Owner-ready operations"],
+    previewEyebrow: "Live floor preview",
+    previewServiceLabel: "Dinner service in progress",
+    previewStatusLabel: "Online",
+    previewMetrics: [
+      { label: "Orders Today", value: "42", detail: "+18% vs last week" },
+      { label: "Kitchen Live", value: "06", detail: "active tickets" },
+      { label: "Average Prep Time", value: "12m", detail: "current service" }
+    ],
+    queueTitle: "Kitchen queue",
+    queueDescription: "New orders move from scan to station without refresh.",
+    queueRows: [
+      { table: "Table 04", status: "Preparing", items: "6 items" },
+      { table: "Table 09", status: "Ready", items: "2 items" },
+      { table: "Table 12", status: "New", items: "4 items" }
+    ],
+    averageTicketLabel: "Average ticket value",
+    averageTicketDescription: "Tracked as order value, not revenue.",
+    averageTicketValue: "$48.20",
+    operationsEyebrow: "Restaurant operations",
+    operationsTitle: "A complete service flow, presented simply.",
+    operationsDescription:
+      "Three connected views give guests, kitchen staff, and owners exactly what they need without adding noise to service.",
+    featureCards: [
+      {
+        label: "Customer ordering",
+        detail: "Guests scan, browse, add notes, and send orders from the table.",
+        icon: "qr",
+        href: "/menu?table=1"
+      },
+      {
+        label: "Kitchen live board",
+        detail: "Clear order cards, staff requests, and one-tap status flow.",
+        icon: "chef",
+        href: "/kitchen"
+      },
+      {
+        label: "Owner control",
+        detail: "Menu availability, table status, QR sheets, and order value metrics.",
+        icon: "chart",
+        href: "/admin"
+      }
+    ],
+    featureCtaLabel: "Open view"
+  },
+  kitchenAccess: {
+    eyebrow: "Kitchen Display",
+    title: "Kitchen access",
+    pinHelpText: "Enter the owner-generated kitchen PIN. Demo PIN: 123456.",
+    pinPlaceholder: "123456",
+    submitLabel: "Enter Kitchen",
+    checkingLabel: "Checking..."
+  },
   theme: {
     id: "steakhouse",
     name: "Steakhouse",
