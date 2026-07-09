@@ -7,7 +7,21 @@ import { currency } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
 import type { Order, OrderStatus } from "@/types";
 
-const steps: OrderStatus[] = ["new", "preparing", "ready"];
+const steps: OrderStatus[] = ["new", "preparing", "ready", "completed"];
+
+const stepLabels: Record<OrderStatus, string> = {
+  new: "Submitted",
+  preparing: "Preparing",
+  ready: "Ready",
+  completed: "Completed"
+};
+
+const stepSubtitles: Record<OrderStatus, string> = {
+  new: "Order received",
+  preparing: "Kitchen is working",
+  ready: "Ready soon",
+  completed: "Order completed"
+};
 
 export function OrderTracking({
   order,
@@ -35,7 +49,7 @@ export function OrderTracking({
     );
   }
 
-  const current = steps.indexOf(currentOrder.status === "completed" ? "ready" : currentOrder.status);
+  const current = steps.indexOf(currentOrder.status);
   const currentStatusLabel =
     currentOrder.status === "new"
       ? "Submitted"
@@ -86,7 +100,7 @@ export function OrderTracking({
         </div>
 
         <div className="mt-9 rounded-card border border-white/[0.08] bg-black/16 p-4 light:border-black/[0.06] light:bg-black/[0.025] sm:p-5">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-4">
           {steps.map((step, index) => (
             <div
               key={step}
@@ -110,12 +124,8 @@ export function OrderTracking({
               >
                 {index <= current ? <CheckCircle2 size={21} /> : <Circle size={21} />}
               </div>
-              <p className="mt-4 font-semibold capitalize text-white light:text-black">
-                {step === "new" ? "Submitted" : step}
-              </p>
-              <p className="mt-1 text-sm text-white/45 light:text-black/45">
-                {step === "new" ? "Order received" : step === "preparing" ? "Kitchen is working" : "Ready soon"}
-              </p>
+              <p className="mt-4 font-semibold text-white light:text-black">{stepLabels[step]}</p>
+              <p className="mt-1 text-sm text-white/45 light:text-black/45">{stepSubtitles[step]}</p>
             </div>
           ))}
           </div>
