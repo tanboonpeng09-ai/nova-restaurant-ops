@@ -4,16 +4,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Moon, Sun } from "lucide-react";
+import { Expand, Minimize, Moon, Sun } from "lucide-react";
 import { Toaster } from "sonner";
 import { restaurantConfig } from "@/config/restaurant";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [light, setLight] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const pathname = usePathname();
   const isCustomerMenu = pathname === "/menu";
-  const navigationLinks = [
+  const isKitchen = pathname === "/kitchen";
+  const navigationLinks = (isKitchen ? [] : [
     restaurantConfig.navigation.showMenuLink
       ? [restaurantConfig.navigation.menuLabel, "/menu?table=1"]
       : null,
@@ -23,11 +25,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     restaurantConfig.navigation.showAdminLink
       ? [restaurantConfig.navigation.adminLabel, "/admin"]
       : null
-  ].filter((item): item is [string, string] => item !== null);
+  ]).filter((item): item is [string, string] => item !== null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("light", light);
   }, [light]);
+
+  useEffect(() => {
+    const updateFullscreenState = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", updateFullscreenState);
+
+    return () => document.removeEventListener("fullscreenchange", updateFullscreenState);
+  }, []);
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+  }
 
   return (
     <>
@@ -69,7 +90,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               {light ? <Moon size={18} /> : <Sun size={18} />}
             </button>
-            {restaurantConfig.navigation.showTryDemoButton && (
+            {isKitchen && (
+              <button
+                type="button"
+                onClick={() => void toggleFullscreen()}
+                className="pressable grid size-10 place-items-center rounded-button border border-white/[0.09] bg-white/[0.055] text-white hover:bg-white/[0.09] light:border-black/[0.08] light:bg-black/[0.045] light:text-black"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <Minimize size={18} /> : <Expand size={18} />}
+              </button>
+            )}
+            {!isKitchen && restaurantConfig.navigation.showTryDemoButton && (
               <Link
                 href="/menu?table=1"
                 className={cn(
