@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bell,
@@ -24,6 +24,7 @@ import {
 import { restaurantConfig } from "@/config/restaurant";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getGenuinelyNewOrderIds } from "@/lib/kitchen-order-alerts";
 import { currency, statusLabel } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
 import type { OrderStatus } from "@/types";
@@ -80,13 +81,39 @@ function orderCreatedTime(createdAt: string) {
   });
 }
 
+function playKitchenAlertSound(audioContext: AudioContext, delay = 0) {
+  const startedAt = audioContext.currentTime + delay;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(880, startedAt);
+  oscillator.frequency.exponentialRampToValueAtTime(660, startedAt + 0.16);
+  gain.gain.setValueAtTime(0.0001, startedAt);
+  gain.gain.exponentialRampToValueAtTime(0.12, startedAt + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startedAt + 0.2);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(startedAt);
+  oscillator.stop(startedAt + 0.21);
+}
+
+function getAudioContextConstructor() {
+  return window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+}
+
 export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: RestaurantSnapshot }) {
   const [pin, setPin] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
-  const [notificationEnabled, setNotificationEnabled] = useState(false);
+  const [alertsEnabled, setAlertsEnabled] = useState(false);
+  const [isAlertActivationPending, setIsAlertActivationPending] = useState(false);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
   const [busyRequestId, setBusyRequestId] = useState<string | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const alertsEnabledRef = useRef(false);
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const {
     snapshot,
     refreshOrders,
@@ -117,6 +144,37 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     }
   }, [activeOrders, unlocked]);
 
+  useEffect(() => {
+    const newOrderIds = getGenuinelyNewOrderIds(orders, knownOrderIdsRef.current);
+    orders.forEach((order) => knownOrderIdsRef.current.add(order.id));
+
+    if (!alertsEnabled || newOrderIds.length === 0) return;
+
+    const audioContext = audioContextRef.current;
+    if (!audioContext) return;
+
+    void audioContext
+      .resume()
+      .then(() => {
+        if (!alertsEnabledRef.current) return;
+        newOrderIds.forEach((_, index) => playKitchenAlertSound(audioContext, index * 0.26));
+      })
+      .catch(() => {
+        alertsEnabledRef.current = false;
+        setAlertsEnabled(false);
+        toast.error("Audio alerts are unavailable. Check browser sound settings and enable them again.");
+      });
+  }, [alertsEnabled, orders]);
+
+  useEffect(() => {
+    return () => {
+      const audioContext = audioContextRef.current;
+      if (audioContext && audioContext.state !== "closed") {
+        void audioContext.close();
+      }
+    };
+  }, []);
+
   async function unlockKitchen() {
     if (!pin.trim() || isUnlocking) return;
     setIsUnlocking(true);
@@ -136,14 +194,46 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     }
   }
 
-  async function enableNotifications() {
-    if (!("Notification" in window)) {
-      toast.error("Browser notifications are not supported.");
+  async function toggleAudioAlerts() {
+    if (isAlertActivationPending) return;
+
+    if (alertsEnabled) {
+      alertsEnabledRef.current = false;
+      setAlertsEnabled(false);
+      try {
+        await audioContextRef.current?.suspend();
+      } catch {
+        // The visual toggle still disables alerts even if the browser cannot suspend its context.
+      }
+      toast.success("Audio alerts disabled.");
       return;
     }
-    const permission = await Notification.requestPermission();
-    setNotificationEnabled(permission === "granted");
-    toast.success(permission === "granted" ? "Notifications enabled." : "Notifications not enabled.");
+
+    const AudioContextConstructor = getAudioContextConstructor();
+    if (!AudioContextConstructor) {
+      toast.error("Audio alerts are not supported by this browser.");
+      return;
+    }
+
+    setIsAlertActivationPending(true);
+    try {
+      const audioContext = audioContextRef.current ?? new AudioContextConstructor();
+      audioContextRef.current = audioContext;
+      await audioContext.resume();
+      playKitchenAlertSound(audioContext);
+
+      // Existing orders are the activation baseline and must never announce after a refresh.
+      knownOrderIdsRef.current = new Set(orders.map((order) => order.id));
+      alertsEnabledRef.current = true;
+      setAlertsEnabled(true);
+      toast.success("Audio alerts enabled.");
+    } catch {
+      alertsEnabledRef.current = false;
+      setAlertsEnabled(false);
+      toast.error("Could not enable audio alerts. Check browser sound settings and try again.");
+    } finally {
+      setIsAlertActivationPending(false);
+    }
   }
 
   if (!unlocked) {
@@ -216,12 +306,18 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
               </div>
               <button
                 type="button"
-                onClick={enableNotifications}
-                className="pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:bg-slate-50"
+                onClick={() => void toggleAudioAlerts()}
+                disabled={isAlertActivationPending}
+                aria-pressed={alertsEnabled}
+                aria-label={alertsEnabled ? "Disable audio alerts" : "Enable audio alerts"}
+                className="pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
               >
-                {notificationEnabled ? <Volume2 size={18} /> : <Bell size={18} />}
-                {notificationEnabled ? "Alerts On" : "Enable Alerts"}
+                {alertsEnabled ? <Volume2 size={18} /> : <Bell size={18} />}
+                {isAlertActivationPending ? "Enabling..." : alertsEnabled ? "Alerts On" : "Enable Alerts"}
               </button>
+              <span className="sr-only" aria-live="polite">
+                {alertsEnabled ? "Audio alerts are enabled." : "Audio alerts are disabled."}
+              </span>
             </div>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
