@@ -50,6 +50,9 @@ const nextActionLabel: Record<OrderStatus, string> = {
   completed: "Completed"
 };
 
+const kitchenAlertAudioPath = "/audio/new-order-notification.mp3";
+const kitchenAlertGain = 0.12;
+
 const kitchenLanes: Array<{
   status: Exclude<OrderStatus, "completed">;
   title: string;
@@ -81,22 +84,25 @@ function orderCreatedTime(createdAt: string) {
   });
 }
 
-function playKitchenAlertSound(audioContext: AudioContext, delay = 0) {
+async function loadKitchenAlertSound(audioContext: AudioContext) {
+  const response = await fetch(kitchenAlertAudioPath);
+  if (!response.ok) throw new Error("Could not load the kitchen notification sound.");
+
+  return audioContext.decodeAudioData(await response.arrayBuffer());
+}
+
+function playKitchenAlertSound(audioContext: AudioContext, audioBuffer: AudioBuffer, delay = 0) {
   const startedAt = audioContext.currentTime + delay;
-  const oscillator = audioContext.createOscillator();
+  const source = audioContext.createBufferSource();
   const gain = audioContext.createGain();
 
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(880, startedAt);
-  oscillator.frequency.exponentialRampToValueAtTime(660, startedAt + 0.16);
-  gain.gain.setValueAtTime(0.0001, startedAt);
-  gain.gain.exponentialRampToValueAtTime(0.12, startedAt + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startedAt + 0.2);
+  source.buffer = audioBuffer;
+  source.loop = false;
+  gain.gain.setValueAtTime(kitchenAlertGain, startedAt);
 
-  oscillator.connect(gain);
+  source.connect(gain);
   gain.connect(audioContext.destination);
-  oscillator.start(startedAt);
-  oscillator.stop(startedAt + 0.21);
+  source.start(startedAt);
 }
 
 function getAudioContextConstructor() {
@@ -112,6 +118,7 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
   const [busyRequestId, setBusyRequestId] = useState<string | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
   const alertsEnabledRef = useRef(false);
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const {
@@ -151,13 +158,14 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     if (!alertsEnabled || newOrderIds.length === 0) return;
 
     const audioContext = audioContextRef.current;
-    if (!audioContext) return;
+    const audioBuffer = audioBufferRef.current;
+    if (!audioContext || !audioBuffer) return;
 
     void audioContext
       .resume()
       .then(() => {
         if (!alertsEnabledRef.current) return;
-        newOrderIds.forEach((_, index) => playKitchenAlertSound(audioContext, index * 0.26));
+        newOrderIds.forEach((_, index) => playKitchenAlertSound(audioContext, audioBuffer, index * 0.26));
       })
       .catch(() => {
         alertsEnabledRef.current = false;
@@ -220,7 +228,9 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
       const audioContext = audioContextRef.current ?? new AudioContextConstructor();
       audioContextRef.current = audioContext;
       await audioContext.resume();
-      playKitchenAlertSound(audioContext);
+      const audioBuffer = audioBufferRef.current ?? await loadKitchenAlertSound(audioContext);
+      audioBufferRef.current = audioBuffer;
+      playKitchenAlertSound(audioContext, audioBuffer);
 
       // Existing orders are the activation baseline and must never announce after a refresh.
       knownOrderIdsRef.current = new Set(orders.map((order) => order.id));
