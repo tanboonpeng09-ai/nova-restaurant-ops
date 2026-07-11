@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { ArrowLeft, BellRing, CheckCircle2, Minus, Plus, ReceiptText, Sparkles } from "lucide-react";
 import { currency } from "@/lib/utils";
-import type { CartItem, Order, StaffRequestType } from "@/types";
+import type { CartItem, Order, StaffRequestType, Table, TableMode } from "@/types";
 import { EmptyCartState } from "@/components/menu/empty-cart-state";
 
 export function CartCommandCenter({
   cart,
   tableNumber,
+  tableMode,
+  activeTables,
+  hasValidTable,
+  tableMessage,
   notes,
   subtotal,
   isSubmitting,
@@ -25,6 +29,10 @@ export function CartCommandCenter({
 }: {
   cart: CartItem[];
   tableNumber: string;
+  tableMode: TableMode;
+  activeTables: Table[];
+  hasValidTable: boolean;
+  tableMessage: string | null;
   notes: string;
   subtotal: number;
   isSubmitting: boolean;
@@ -67,14 +75,15 @@ export function CartCommandCenter({
             {cart.length}
           </span>
         </div>
-        <label className="mt-5 block text-sm font-semibold text-slate-700 lg:hidden">
-          Table number
-          <input
-            value={tableNumber}
-            onChange={(event) => onTableNumberChange(event.target.value)}
-            className="mt-2 h-11 w-full rounded-button border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+        <div className="mt-5 lg:hidden">
+          <TableContextControl
+            tableNumber={tableNumber}
+            tableMode={tableMode}
+            activeTables={activeTables}
+            tableMessage={tableMessage}
+            onTableNumberChange={onTableNumberChange}
           />
-        </label>
+        </div>
         <div className="mt-5 space-y-3 lg:mt-4 lg:max-h-[42vh] lg:space-y-2 lg:overflow-y-auto lg:pr-1">
           {cart.length === 0 ? (
             <EmptyCartState />
@@ -126,9 +135,9 @@ export function CartCommandCenter({
         <button
           type="button"
           onClick={onSubmitOrder}
-          disabled={isSubmitting || !hasCartItems}
+          disabled={isSubmitting || !hasCartItems || !hasValidTable}
           className={`pressable mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-button px-5 py-4 font-bold transition duration-200 lg:mt-3 lg:min-h-12 ${
-            hasCartItems
+            hasCartItems && hasValidTable
               ? "bg-emerald-500 text-white shadow-[0_18px_44px_rgba(16,185,129,0.26)] hover:bg-emerald-600 md:hover:-translate-y-0.5 lg:shadow-[0_12px_28px_rgba(16,185,129,0.18)]"
               : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400 shadow-none"
           } disabled:cursor-not-allowed`}
@@ -137,14 +146,14 @@ export function CartCommandCenter({
         </button>
         <div className="mt-3 hidden rounded-[12px] border border-slate-200 bg-white p-3 lg:block">
           <div className="flex items-center justify-between gap-3">
-            <label className="min-w-0 flex-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-              Table
-              <input
-                value={tableNumber}
-                onChange={(event) => onTableNumberChange(event.target.value)}
-                className="mt-1.5 h-8 w-full rounded-[10px] border border-slate-200 bg-slate-50 px-2.5 text-sm font-bold text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-              />
-            </label>
+            <TableContextControl
+              tableNumber={tableNumber}
+              tableMode={tableMode}
+              activeTables={activeTables}
+              tableMessage={tableMessage}
+              onTableNumberChange={onTableNumberChange}
+              compact
+            />
           </div>
           <textarea
             value={notes}
@@ -173,7 +182,7 @@ export function CartCommandCenter({
             type="button"
             key={type}
             onClick={() => onRequestStaff(type as StaffRequestType)}
-            disabled={requestingType !== null}
+            disabled={requestingType !== null || !hasValidTable}
             className="pressable min-h-[68px] rounded-button border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-500 shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition duration-200 hover:bg-slate-50 hover:text-slate-950 lg:min-h-12 lg:py-2 lg:text-xs lg:shadow-[0_4px_12px_rgba(15,23,42,0.035)]"
           >
             <BellRing className="mx-auto mb-1" size={16} />
@@ -185,5 +194,50 @@ export function CartCommandCenter({
         <Sparkles size={14} /> {syncError ?? (isRefreshing ? "Syncing latest data..." : "Orders sync to the kitchen in real time.")}
       </p>
     </aside>
+  );
+}
+
+function TableContextControl({
+  tableNumber,
+  tableMode,
+  activeTables,
+  tableMessage,
+  onTableNumberChange,
+  compact = false
+}: {
+  tableNumber: string;
+  tableMode: TableMode;
+  activeTables: Table[];
+  tableMessage: string | null;
+  onTableNumberChange: (value: string) => void;
+  compact?: boolean;
+}) {
+  if (tableMode === "demo-selector") {
+    return (
+      <label className={`block min-w-0 flex-1 font-bold text-slate-500 ${compact ? "text-[10px] uppercase tracking-[0.12em]" : "text-sm"}`}>
+        Demo table selector
+        <select
+          value={tableNumber}
+          onChange={(event) => onTableNumberChange(event.target.value)}
+          className={`w-full rounded-[10px] border border-slate-200 bg-slate-50 font-bold text-slate-950 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100 ${compact ? "mt-1.5 h-8 px-2.5 text-sm" : "mt-2 h-11 px-4 text-sm"}`}
+        >
+          {!tableNumber && <option value="">Select a table</option>}
+          {activeTables.map((table) => (
+            <option key={table.id} value={table.number}>{table.label}</option>
+          ))}
+        </select>
+        {tableMessage && <span className="mt-2 block text-xs normal-case tracking-normal text-amber-700">{tableMessage}</span>}
+      </label>
+    );
+  }
+
+  return (
+    <div className="min-w-0 flex-1">
+      <p className={`font-bold text-slate-500 ${compact ? "text-[10px] uppercase tracking-[0.12em]" : "text-sm"}`}>Table</p>
+      <p className={`${compact ? "mt-1.5 text-sm" : "mt-2 text-base"} font-bold text-slate-950`}>
+        {tableNumber ? `Ordering for Table ${tableNumber}` : "Table QR required"}
+      </p>
+      {tableMessage && <p className="mt-2 text-xs font-semibold text-amber-700">{tableMessage}</p>}
+    </div>
   );
 }

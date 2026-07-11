@@ -3,6 +3,8 @@ import type { RestaurantConfig } from "@/types";
 const assetBasePath = "/demo/steakhouse";
 
 export const restaurantConfig: RestaurantConfig = {
+  // Public portfolio demos may use the selector. Real client deployments should use "qr-only".
+  tableMode: "demo-selector",
   name: "NOVA STEAKHOUSE",
   shortName: "NOVA",
   productName: "Restaurant Ops",
@@ -79,7 +81,7 @@ export const restaurantConfig: RestaurantConfig = {
         label: "Customer ordering",
         detail: "Guests scan, browse, add notes, and send orders from the table.",
         icon: "qr",
-        href: "/menu?table=1"
+        href: "/menu"
       },
       {
         label: "Kitchen live board",

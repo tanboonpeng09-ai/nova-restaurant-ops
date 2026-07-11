@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { buildCartFingerprint, generateOrderNumberCandidate } from "@/lib/reliability";
+import { validateActiveTable, type TableValidationClient } from "@/lib/server/table-validation";
 import type { CartItem, OrderStatus, StaffRequestType, TableStatus } from "@/types";
 
 const statusFlow: OrderStatus[] = ["new", "preparing", "ready", "completed"];
@@ -26,12 +27,14 @@ export async function createOrderAction({
   notes: string;
   cart: CartItem[];
 }) {
-  if (!tableNumber.trim()) throw new Error("Table number is required.");
   if (cart.length === 0) throw new Error("Cart is empty.");
 
   const supabase = await createClient();
   const mutationClient = isServiceRoleConfigured() ? createAdminClient() : supabase;
-  const cleanTableNumber = tableNumber.trim();
+  const cleanTableNumber = await validateActiveTable(
+    mutationClient as unknown as TableValidationClient,
+    tableNumber
+  );
   const cleanNotes = notes.trim();
   const requestedCart = cart.filter((item) => item.quantity > 0);
 
@@ -110,7 +113,12 @@ export async function createOrderAction({
     throw itemsError;
   }
 
-  await mutationClient.from("tables").update({ status: "occupied" }).eq("table_number", cleanTableNumber);
+  const { error: tableStatusError } = await mutationClient
+    .from("tables")
+    .update({ status: "occupied" })
+    .eq("table_number", cleanTableNumber);
+
+  if (tableStatusError) throw tableStatusError;
 
   revalidatePath("/menu");
   revalidatePath("/kitchen");
@@ -126,11 +134,12 @@ export async function createStaffRequestAction({
   tableNumber: string;
   type: StaffRequestType;
 }) {
-  if (!tableNumber.trim()) throw new Error("Table number is required.");
-
   const supabase = await createClient();
   const mutationClient = isServiceRoleConfigured() ? createAdminClient() : supabase;
-  const cleanTableNumber = tableNumber.trim();
+  const cleanTableNumber = await validateActiveTable(
+    mutationClient as unknown as TableValidationClient,
+    tableNumber
+  );
   const { data: existing, error: existingError } = await supabase
     .from("staff_requests")
     .select("id")
@@ -156,7 +165,12 @@ export async function createStaffRequestAction({
   if (error) throw error;
 
   if (type === "bill") {
-    await mutationClient.from("tables").update({ status: "needs_bill" }).eq("table_number", cleanTableNumber);
+    const { error: tableStatusError } = await mutationClient
+      .from("tables")
+      .update({ status: "needs_bill" })
+      .eq("table_number", cleanTableNumber);
+
+    if (tableStatusError) throw tableStatusError;
   }
 
   revalidatePath("/kitchen");

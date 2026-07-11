@@ -39,7 +39,7 @@ export function OrderTracking({
         <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-8 text-center shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/84">
           <h1 className="text-3xl font-semibold tracking-tight text-white light:text-black">Order not found</h1>
           <Link
-            href="/menu?table=1"
+            href="/menu"
             className="pressable mt-6 inline-flex rounded-button bg-ember px-5 py-3 font-semibold text-white"
           >
             Back to menu

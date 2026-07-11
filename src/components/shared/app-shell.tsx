@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isKitchen = pathname === "/kitchen";
   const navigationLinks = (isKitchen ? [] : [
     restaurantConfig.navigation.showMenuLink
-      ? [restaurantConfig.navigation.menuLabel, "/menu?table=1"]
+      ? [restaurantConfig.navigation.menuLabel, "/menu"]
       : null,
     restaurantConfig.navigation.showKitchenLink
       ? [restaurantConfig.navigation.kitchenLabel, "/kitchen"]
@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
             {!isKitchen && restaurantConfig.navigation.showTryDemoButton && (
               <Link
-                href="/menu?table=1"
+                href="/menu"
                 className={cn(
                   "pressable rounded-button bg-ember px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_34px_rgba(255,107,44,0.24)]",
                   "hover:-translate-y-0.5 hover:bg-[#ff7c42]"

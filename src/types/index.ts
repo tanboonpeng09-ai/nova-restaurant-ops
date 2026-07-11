@@ -1,6 +1,7 @@
 export type OrderStatus = "new" | "preparing" | "ready" | "completed";
 export type TableStatus = "available" | "occupied" | "needs_bill" | "cleaning";
 export type StaffRequestType = "bill" | "water" | "assistance";
+export type TableMode = "qr-only" | "demo-selector";
 
 export type ThemeId = "steakhouse" | "japanese" | "cafe" | "italian" | "fast_food";
 
@@ -47,6 +48,7 @@ export type ThemeConfig = {
 };
 
 export type RestaurantConfig = {
+  tableMode: TableMode;
   name: string;
   shortName: string;
   productName: string;

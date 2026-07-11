@@ -23,7 +23,7 @@ export function MobileMenuHeader({
           </div>
         </div>
         <span className="inline-flex h-8 shrink-0 items-center rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200">
-          Table {tableNumber || "?"}
+          {tableNumber ? `Table ${tableNumber}` : "Scan table QR"}
         </span>
       </div>
     </div>

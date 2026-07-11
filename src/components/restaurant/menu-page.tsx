@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { UserRound, Utensils } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,12 @@ import {
   shouldSuppressStaffRequest
 } from "@/lib/reliability";
 import { getCartItemQuantity } from "@/lib/cart-quantity";
+import { restaurantConfig } from "@/config/restaurant";
+import {
+  buildTableMenuUrl,
+  getActiveTables,
+  resolveTableParameter
+} from "@/lib/table-resolution";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
 import type { MenuItem, StaffRequestType } from "@/types";
 
@@ -29,9 +35,8 @@ const addToCartToastId = "menu-add-to-cart";
 
 export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnapshot }) {
   const searchParams = useSearchParams();
-  const initialTable = searchParams.get("table") ?? "1";
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState("");
-  const [tableNumber, setTableNumber] = useState(initialTable);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestingType, setRequestingType] = useState<StaffRequestType | null>(null);
@@ -43,6 +48,15 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
   const { settings, categories, menuItems, orders, staffRequests } = snapshot;
   const { cart, addToCart, removeFromCart, setCartQuantity, clearCart, lastOrderId, setLastOrderId } =
     useRestaurantStore();
+
+  const activeTables = useMemo(() => getActiveTables(snapshot.tables), [snapshot.tables]);
+  const tableResolution = useMemo(
+    () => resolveTableParameter(searchParams.get("table"), snapshot.tables),
+    [searchParams, snapshot.tables]
+  );
+  const resolvedTable = tableResolution.status === "valid" ? tableResolution.table : null;
+  const tableNumber = resolvedTable?.number ?? "";
+  const hasValidTable = resolvedTable !== null;
 
   const selectedCategory = activeCategory || categories[0]?.id || "";
   const visibleItems = useMemo(
@@ -57,6 +71,19 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
   const trackOrderId = confirmedOrderId ?? lastOrderId;
   const lastOrder = orders.find((order) => order.id === trackOrderId);
+
+  useEffect(() => {
+    if (
+      restaurantConfig.tableMode !== "demo-selector" ||
+      tableResolution.status !== "missing" ||
+      !activeTables[0]
+    ) {
+      return;
+    }
+
+    const url = new URL(buildTableMenuUrl(window.location.href, activeTables[0].number));
+    router.replace(`${url.pathname}${url.search}`, { scroll: false });
+  }, [activeTables, router, tableResolution.status]);
 
   useEffect(() => {
     function syncReviewStateFromHash() {
@@ -93,8 +120,8 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       toast.error("Ordering is currently closed.", menuToastOptions);
       return;
     }
-    if (!tableNumber.trim()) {
-      toast.error("Enter a table number before placing the order.", menuToastOptions);
+    if (!resolvedTable) {
+      toast.error("Scan your table QR code to place an order.", menuToastOptions);
       return;
     }
     if (cart.length === 0) {
@@ -102,7 +129,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       return;
     }
 
-    const cleanTableNumber = tableNumber.trim();
+    const cleanTableNumber = resolvedTable.number;
     const cleanNotes = notes.trim();
     const submissionKey = `${cleanTableNumber}:${cleanNotes}:${buildCartFingerprint(
       cart.map((item) => ({
@@ -145,8 +172,8 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
   }
 
   async function requestStaff(type: StaffRequestType) {
-    if (!tableNumber.trim()) {
-      toast.error("Enter your table number first.", menuToastOptions);
+    if (!resolvedTable) {
+      toast.error("Scan your table QR code to place an order.", menuToastOptions);
       return;
     }
     if (requestingType) {
@@ -154,7 +181,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       return;
     }
 
-    const cleanTableNumber = tableNumber.trim();
+    const cleanTableNumber = resolvedTable.number;
     const requestKey = `${cleanTableNumber}:${type}`;
     const requestedAt = Date.now();
 
@@ -220,6 +247,14 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
     setCartQuantity(item.id, quantity - 1);
   }
 
+  function selectDemoTable(nextTableNumber: string) {
+    const nextTable = activeTables.find((table) => table.number === nextTableNumber);
+    if (!nextTable) return;
+
+    const url = new URL(buildTableMenuUrl(window.location.href, nextTable.number));
+    router.replace(`${url.pathname}${url.search}`, { scroll: false });
+  }
+
   if (!settings.orderingEnabled) {
     return (
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl items-center px-4 py-16 text-center">
@@ -253,7 +288,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
         </div>
         <div className="flex items-center gap-3">
           <span className="inline-flex h-8 items-center rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200">
-            Table {tableNumber || "?"}
+            {resolvedTable ? `Table ${resolvedTable.number}` : "Scan table QR"}
           </span>
           <span className="grid size-8 place-items-center rounded-full bg-white text-slate-700 ring-1 ring-slate-200">
             <UserRound size={15} />
@@ -368,6 +403,10 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
       <CartCommandCenter
         cart={cart}
         tableNumber={tableNumber}
+        tableMode={restaurantConfig.tableMode}
+        activeTables={activeTables}
+        hasValidTable={hasValidTable}
+        tableMessage={hasValidTable ? null : "Scan your table QR code to place an order."}
         notes={notes}
         subtotal={subtotal}
         isSubmitting={isSubmitting}
@@ -376,7 +415,7 @@ export function MenuPage({ initialSnapshot }: { initialSnapshot: RestaurantSnaps
         requestingType={requestingType}
         syncError={syncError}
         isRefreshing={isRefreshing}
-        onTableNumberChange={setTableNumber}
+        onTableNumberChange={selectDemoTable}
         onNotesChange={setNotes}
         onSetCartQuantity={setCartQuantity}
         onSubmitOrder={submitOrder}

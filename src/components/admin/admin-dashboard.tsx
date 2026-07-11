@@ -32,6 +32,7 @@ import {
   toggleOrderingAction
 } from "@/actions/admin-actions";
 import { restaurantConfig } from "@/config/restaurant";
+import { buildTableMenuUrl } from "@/lib/table-resolution";
 import { updateTableStatusAction } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import { currency, statusLabel } from "@/lib/utils";
@@ -131,7 +132,7 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
   }
 
   async function downloadQr(tableNumber: string) {
-    const url = `${window.location.origin}/menu?table=${tableNumber}`;
+    const url = buildTableMenuUrl(window.location.origin, tableNumber);
     const dataUrl = await QRCode.toDataURL(url, { margin: 2, width: 512 });
     const anchor = document.createElement("a");
     anchor.href = dataUrl;
@@ -143,11 +144,12 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text(`${settings.name} Table QR Codes`, 16, 18);
-    for (let index = 0; index < tables.length; index += 1) {
-      const table = tables[index];
+    const activeTables = tables.filter((table) => table.isActive);
+    for (let index = 0; index < activeTables.length; index += 1) {
+      const table = activeTables[index];
       const x = 16 + (index % 3) * 62;
       const y = 30 + Math.floor(index / 3) * 62;
-      const dataUrl = await QRCode.toDataURL(`${window.location.origin}/menu?table=${table.number}`, {
+      const dataUrl = await QRCode.toDataURL(buildTableMenuUrl(window.location.origin, table.number), {
         margin: 1,
         width: 160
       });

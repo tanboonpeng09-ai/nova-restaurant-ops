@@ -181,6 +181,12 @@ with check (
     select 1 from public.restaurant_settings
     where ordering_enabled = true
   )
+  and exists (
+    select 1
+    from public.tables as active_table
+    where active_table.table_number = orders.table_number
+      and active_table.is_active = true
+  )
 );
 
 create policy "Kitchen can read orders"
@@ -210,6 +216,12 @@ with check (
   exists (
     select 1 from public.restaurant_settings
     where ordering_enabled = true
+  )
+  and exists (
+    select 1
+    from public.tables as active_table
+    where active_table.table_number = staff_requests.table_number
+      and active_table.is_active = true
   )
 );
 

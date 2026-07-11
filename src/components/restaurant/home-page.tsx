@@ -46,7 +46,7 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/menu?table=1"
+                href="/menu"
                 className="pressable inline-flex min-h-14 items-center justify-center gap-2 rounded-button bg-ember px-7 py-4 font-semibold text-white shadow-[0_18px_42px_rgba(255,107,44,0.22)] hover:-translate-y-0.5 hover:shadow-[0_22px_54px_rgba(255,107,44,0.28)]"
               >
                 {homeConfig.primaryCtaLabel} <ArrowRight size={18} />
