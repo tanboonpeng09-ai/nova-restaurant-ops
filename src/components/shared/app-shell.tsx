@@ -15,14 +15,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isCustomerMenu = pathname === "/menu";
   const isKitchen = pathname === "/kitchen";
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const navigationLinks = (isKitchen ? [] : [
     restaurantConfig.navigation.showMenuLink
-      ? [restaurantConfig.navigation.menuLabel, "/menu"]
+      ? [isAdminRoute ? "View Menu" : restaurantConfig.navigation.menuLabel, "/menu"]
       : null,
     restaurantConfig.navigation.showKitchenLink
       ? [restaurantConfig.navigation.kitchenLabel, "/kitchen"]
       : null,
-    restaurantConfig.navigation.showAdminLink
+    restaurantConfig.navigation.showAdminLink && !isAdminRoute
       ? [restaurantConfig.navigation.adminLabel, "/admin"]
       : null
   ]).filter((item): item is [string, string] => item !== null);
@@ -101,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {isFullscreen ? <Minimize size={18} /> : <Expand size={18} />}
               </button>
             )}
-            {!isKitchen && restaurantConfig.navigation.showTryDemoButton && (
+            {!isKitchen && !isAdminRoute && restaurantConfig.navigation.showTryDemoButton && (
               <Link
                 href="/menu"
                 className={cn(

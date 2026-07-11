@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Activity,
   AlertTriangle,
   BarChart3,
+  ChefHat,
   ClipboardList,
   Download,
   LayoutDashboard,
@@ -212,6 +214,20 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <Link
+                href="/menu"
+                className="pressable inline-flex min-h-11 items-center gap-2 rounded-button border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 md:hidden"
+              >
+                <Utensils size={16} />
+                View Menu
+              </Link>
+              <Link
+                href="/kitchen"
+                className="pressable inline-flex min-h-11 items-center gap-2 rounded-button border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 md:hidden"
+              >
+                <ChefHat size={16} />
+                Kitchen
+              </Link>
               <button
                 type="button"
                 onClick={async () => {
