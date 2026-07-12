@@ -1,4 +1,5 @@
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { loadAdminReportAction } from "@/actions/admin-actions";
 import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -26,7 +27,10 @@ export default async function Page() {
     if (!data) redirect("/admin/login?error=This%20user%20is%20not%20linked%20to%20admin_users.");
   }
 
-  const snapshot = await loadRestaurantSnapshot();
+  const [snapshot, initialReportResult] = await Promise.all([
+    loadRestaurantSnapshot(),
+    loadAdminReportAction("today")
+  ]);
 
-  return <AdminDashboard initialSnapshot={snapshot} />;
+  return <AdminDashboard initialSnapshot={snapshot} initialReportResult={initialReportResult} />;
 }

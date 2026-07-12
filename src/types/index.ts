@@ -49,6 +49,7 @@ export type ThemeConfig = {
 
 export type RestaurantConfig = {
   tableMode: TableMode;
+  timeZone: string;
   name: string;
   shortName: string;
   productName: string;

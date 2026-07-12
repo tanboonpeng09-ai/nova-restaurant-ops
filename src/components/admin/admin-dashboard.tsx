@@ -2,27 +2,21 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { format } from "date-fns";
 import {
   Activity,
   AlertTriangle,
-  BarChart3,
   ChefHat,
-  ClipboardList,
-  Download,
   LayoutDashboard,
   LogOut,
   Power,
   QrCode,
   RefreshCcw,
-  Search,
   Settings,
   Table2,
   Utensils,
   Wifi,
   WifiOff
 } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import QRCode from "qrcode";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
@@ -33,21 +27,16 @@ import {
   toggleItemAvailabilityAction,
   toggleOrderingAction
 } from "@/actions/admin-actions";
-import { restaurantConfig } from "@/config/restaurant";
+import { DailyReportingSection } from "@/components/admin/daily-reporting-section";
 import { buildTableMenuUrl } from "@/lib/table-resolution";
 import { updateTableStatusAction } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
+import type { AdminReportActionResult } from "@/lib/reporting/admin-report";
 import { currency, statusLabel } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
-import type { OrderStatus, TableStatus } from "@/types";
+import type { TableStatus } from "@/types";
 
 const tableStatuses: TableStatus[] = ["available", "occupied", "needs_bill", "cleaning"];
-const adminOrderStatusStyles: Record<OrderStatus, string> = {
-  new: "bg-teal-600 text-white ring-teal-700/10 shadow-[0_8px_18px_rgba(13,148,136,0.16)]",
-  preparing: "bg-amber-500 text-slate-950 ring-amber-600/10 shadow-[0_8px_18px_rgba(245,158,11,0.16)]",
-  ready: "bg-blue-600 text-white ring-blue-700/10 shadow-[0_8px_18px_rgba(37,99,235,0.16)]",
-  completed: "bg-slate-600 text-white ring-slate-700/10 shadow-[0_8px_18px_rgba(71,85,105,0.14)]"
-};
 const adminTableStatusStyles: Record<TableStatus, string> = {
   available: "bg-emerald-600 text-white ring-emerald-700/10 shadow-[0_8px_18px_rgba(5,150,105,0.18)]",
   occupied: "bg-amber-500 text-slate-950 ring-amber-600/10 shadow-[0_8px_18px_rgba(245,158,11,0.16)]",
@@ -55,47 +44,17 @@ const adminTableStatusStyles: Record<TableStatus, string> = {
   cleaning: "bg-slate-700 text-white ring-slate-800/10 shadow-[0_8px_18px_rgba(51,65,85,0.16)]"
 };
 
-export function AdminDashboard({ initialSnapshot }: { initialSnapshot: RestaurantSnapshot }) {
-  const [query, setQuery] = useState("");
+export function AdminDashboard({
+  initialSnapshot,
+  initialReportResult
+}: {
+  initialSnapshot: RestaurantSnapshot;
+  initialReportResult: AdminReportActionResult;
+}) {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const { snapshot, refreshAll, refreshTables, isRefreshing, syncError, isRealtimeConnected } =
     useRestaurantRealtime(initialSnapshot);
   const { settings, menuItems, orders, tables, staffRequests } = snapshot;
-
-  const stats = useMemo(() => {
-    const total = orders.reduce((sum, order) => sum + order.subtotal, 0);
-    const average = orders.length ? total / orders.length : 0;
-    const itemCounts = new Map<string, number>();
-    orders.forEach((order) =>
-      order.items.forEach((item) => {
-        itemCounts.set(item.itemName, (itemCounts.get(item.itemName) ?? 0) + item.quantity);
-      })
-    );
-    const popular = [...itemCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "No orders yet";
-    return { total, average, popular, active: orders.filter((order) => order.status !== "completed").length };
-  }, [orders]);
-
-  const chartData = useMemo(() => {
-    const ordersByHour = new Map<number, number>();
-
-    orders.forEach((order) => {
-      const hour = new Date(order.createdAt).getHours();
-      ordersByHour.set(hour, (ordersByHour.get(hour) ?? 0) + 1);
-    });
-
-    return [...ordersByHour.entries()]
-      .sort(([leftHour], [rightHour]) => leftHour - rightHour)
-      .map(([hour, orderCount]) => ({
-        hour: format(new Date(2026, 0, 1, hour), "h a"),
-        orders: orderCount
-      }));
-  }, [orders]);
-
-  const filteredOrders = orders.filter(
-    (order) =>
-      order.tableNumber.includes(query) ||
-      order.orderNumber.toLowerCase().includes(query.toLowerCase())
-  );
 
   const syncLabel = syncError ??
     (isRefreshing
@@ -104,34 +63,35 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
         ? "Realtime connected"
         : "Realtime reconnecting");
   const sortedTables = useMemo(() => sortTablesForAdmin(tables), [tables]);
-  const statCards: Array<{ label: string; value: string | number; detail: string }> = [
-    { label: "Orders Today", value: orders.length, detail: "Latest 100 orders in the current data window" },
-    { label: "Active Orders", value: stats.active, detail: "Orders not yet completed" },
-    { label: "Order Value", value: currency(stats.total), detail: "Gross value from loaded orders" },
-    { label: "Average Value", value: currency(stats.average), detail: "Average value per loaded order" }
+  const liveStats: Array<{ label: string; value: string | number; detail: string }> = [
+    {
+      label: "Active Orders",
+      value: orders.filter((order) => order.status !== "completed").length,
+      detail: "Live new, preparing, and ready orders"
+    },
+    {
+      label: "Open Staff Requests",
+      value: staffRequests.filter((request) => request.status === "open").length,
+      detail: "Current unresolved dining-room calls"
+    },
+    {
+      label: "Tables In Service",
+      value: tables.filter((table) => table.status === "occupied" || table.status === "needs_bill").length,
+      detail: "Occupied tables and tables requesting the bill"
+    }
   ];
-
-  function exportCsv() {
-    const filePrefix = slugify(settings.name);
-    const rows = [
-      ["Order Number", "Table", "Status", "Order Value", "Created"],
-      ...orders.map((order) => [
-        order.orderNumber,
-        order.tableNumber,
-        order.status,
-        String(order.subtotal),
-        order.createdAt
-      ])
-    ];
-    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${filePrefix}-orders.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
+  const liveOrdersRevision = useMemo(
+    () =>
+      orders
+        .map(
+          (order) =>
+            `${order.id}:${order.status}:${order.updatedAt}:${order.items
+              .map((item) => `${item.id}:${item.quantity}`)
+              .join(",")}`
+        )
+        .join("|"),
+    [orders]
+  );
 
   async function downloadQr(tableNumber: string) {
     const url = buildTableMenuUrl(window.location.origin, tableNumber);
@@ -268,123 +228,32 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
         <main className="mt-6 space-y-6">
           <section aria-labelledby="overview-heading" className="space-y-4">
             <SectionHeader
-              eyebrow="Overview"
-              title="Live operating snapshot"
-              description="A quick read on order volume, active service load, sales value, and current sync state."
+              eyebrow="Live operations"
+              title="Current service"
+              description="Realtime service indicators from the existing operational snapshot."
               icon={<Activity size={18} />}
             />
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {statCards.map(({ label, value, detail }) => (
+            <div className="grid gap-4 md:grid-cols-3">
+              {liveStats.map(({ label, value, detail }) => (
                 <StatCard key={label} label={label} value={value} detail={detail} loading={isRefreshing && orders.length === 0} />
               ))}
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <Panel>
-                <PanelTitle icon={<BarChart3 size={18} />} title="Busy hours" subtitle="Real order counts from loaded orders." />
-                {chartData.length === 0 ? (
-                  <div className="mt-5 grid h-72 place-items-center rounded-[18px] border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
-                    <p className="text-sm font-semibold text-slate-500">No orders yet for this data window.</p>
-                  </div>
-                ) : (
-                  <div className="mt-5 h-72">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.28)" />
-                        <XAxis dataKey="hour" stroke="#64748b" tickLine={false} axisLine={false} />
-                        <YAxis stroke="#64748b" tickLine={false} axisLine={false} allowDecimals={false} />
-                        <Tooltip
-                          cursor={{ fill: "rgba(15,23,42,0.04)" }}
-                          contentStyle={{
-                            borderRadius: 16,
-                            border: "1px solid rgb(226,232,240)",
-                            boxShadow: "0 18px 50px rgba(15,23,42,0.12)"
-                          }}
-                        />
-                        <Bar dataKey="orders" fill={restaurantConfig.theme.colors.primary} radius={[10, 10, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </Panel>
-
-              <Panel>
-                <PanelTitle icon={<Settings size={18} />} title="Restaurant profile" subtitle="Read-only operating context." />
-                <div className="mt-5 grid gap-3 text-sm">
-                  <InfoRow label="Restaurant" value={settings.name} />
-                  <InfoRow label="Tagline" value={settings.tagline} />
-                  <InfoRow label="Phone" value={settings.phone} />
-                  <InfoRow label="Popular item" value={stats.popular} />
-                </div>
-              </Panel>
-            </div>
-          </section>
-
-          <section aria-labelledby="orders-heading" className="space-y-4">
-            <SectionHeader
-              eyebrow="Orders"
-              title="Order history"
-              description="Search recent table orders and export the current order list."
-              icon={<ClipboardList size={18} />}
-              action={
-                <button
-                  type="button"
-                  onClick={exportCsv}
-                  disabled={orders.length === 0}
-                  className="pressable inline-flex min-h-10 items-center gap-2 rounded-button bg-slate-950 px-4 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-                >
-                  <Download size={16} />
-                  CSV
-                </button>
-              }
-            />
             <Panel>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <label className="flex min-h-11 w-full items-center gap-2 rounded-button border border-slate-200 bg-slate-50 px-3 text-slate-600 sm:max-w-sm">
-                  <Search size={16} />
-                  <input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search table or order #"
-                    className="w-full bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
-                  />
-                </label>
-                <span className="text-sm font-semibold text-slate-500">{filteredOrders.length} matching orders</span>
-              </div>
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-400">
-                    <tr>
-                      <th className="py-3 pr-4">Order</th>
-                      <th className="pr-4">Table</th>
-                      <th className="pr-4">Status</th>
-                      <th className="pr-4">Order Value</th>
-                      <th>Created</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredOrders.length === 0 ? (
-                      <tr className="text-slate-500">
-                        <td colSpan={5} className="py-10 text-center">
-                          No orders match this view.
-                        </td>
-                      </tr>
-                    ) : filteredOrders.map((order) => (
-                      <tr key={order.id} className="text-slate-700">
-                        <td className="py-4 pr-4 font-black text-slate-950">{order.orderNumber}</td>
-                        <td className="pr-4 font-bold">Table {order.tableNumber}</td>
-                        <td className="pr-4">
-                          <AdminOrderStatusBadge status={order.status} />
-                        </td>
-                        <td className="pr-4 font-bold">{currency(order.subtotal)}</td>
-                        <td className="text-slate-500">{format(new Date(order.createdAt), "MMM d, h:mm a")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <PanelTitle icon={<Settings size={18} />} title="Restaurant profile" subtitle="Read-only operating context." />
+              <div className="mt-5 grid gap-3 text-sm md:grid-cols-3">
+                <InfoRow label="Restaurant" value={settings.name} />
+                <InfoRow label="Tagline" value={settings.tagline} />
+                <InfoRow label="Phone" value={settings.phone} />
               </div>
             </Panel>
           </section>
+
+          <DailyReportingSection
+            initialReportResult={initialReportResult}
+            restaurantName={settings.name}
+            liveOrdersRevision={liveOrdersRevision}
+          />
 
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <section aria-labelledby="menu-heading" className="space-y-4">
@@ -573,10 +442,6 @@ export function AdminDashboard({ initialSnapshot }: { initialSnapshot: Restauran
   );
 }
 
-function csvCell(value: string) {
-  return `"${value.replaceAll('"', '""')}"`;
-}
-
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -628,16 +493,6 @@ function StatusPill({
     <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black ring-1 ${toneClass}`}>
       {icon}
       {label}
-    </span>
-  );
-}
-
-function AdminOrderStatusBadge({ status }: { status: OrderStatus }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ring-1 ${adminOrderStatusStyles[status]}`}
-    >
-      {statusLabel(status)}
     </span>
   );
 }

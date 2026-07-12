@@ -2,9 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { isServiceRoleConfigured } from "@/lib/env";
+import { restaurantConfig } from "@/config/restaurant";
+import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
+import { buildAdminReport, type AdminReportActionResult } from "@/lib/reporting/admin-report";
+import { assertReportRange, getReportBounds, type ReportRange } from "@/lib/reporting/date-ranges";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getDemoSnapshot } from "@/services/demo-snapshot";
+import { fetchAdminReport } from "@/services/admin-reporting-service";
 
 export type AdminActionResult = {
   ok: boolean;
@@ -58,6 +63,30 @@ export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/admin/login");
+}
+
+export async function loadAdminReportAction(rangeValue: unknown): Promise<AdminReportActionResult> {
+  const supabase = isSupabaseConfigured() ? await requireAdmin() : null;
+
+  try {
+    assertReportRange(rangeValue);
+  } catch {
+    return { ok: false, error: "Invalid reporting range." };
+  }
+
+  const range: ReportRange = rangeValue;
+
+  if (!supabase) {
+    const bounds = getReportBounds(range, restaurantConfig.timeZone);
+    return { ok: true, report: buildAdminReport(getDemoSnapshot().orders, bounds) };
+  }
+
+  try {
+    const report = await fetchAdminReport(supabase, range, restaurantConfig.timeZone);
+    return { ok: true, report };
+  } catch (error) {
+    return adminReportError(error);
+  }
 }
 
 export async function toggleOrderingAction(currentValue: boolean) {
@@ -262,4 +291,13 @@ export async function resetDemoAction() {
   } catch (error) {
     return adminActionError(error, "Could not reset demo data.");
   }
+}
+
+function adminReportError(error: unknown): AdminReportActionResult {
+  if (error instanceof Error) return { ok: false, error: error.message };
+  if (error && typeof error === "object" && "message" in error) {
+    return { ok: false, error: String((error as { message?: unknown }).message ?? "Could not load report.") };
+  }
+
+  return { ok: false, error: "Could not load report." };
 }

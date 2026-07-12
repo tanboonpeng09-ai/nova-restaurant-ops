@@ -5,6 +5,7 @@ const assetBasePath = "/demo/steakhouse";
 export const restaurantConfig: RestaurantConfig = {
   // Public portfolio demos may use the selector. Real client deployments should use "qr-only".
   tableMode: "demo-selector",
+  timeZone: "America/New_York",
   name: "NOVA STEAKHOUSE",
   shortName: "NOVA",
   productName: "Restaurant Ops",
