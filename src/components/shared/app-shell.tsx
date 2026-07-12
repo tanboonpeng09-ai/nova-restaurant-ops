@@ -14,9 +14,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const pathname = usePathname();
   const isCustomerMenu = pathname === "/menu";
+  const isCustomerTracking = pathname.startsWith("/track");
   const isKitchen = pathname === "/kitchen";
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
-  const navigationLinks = (isKitchen ? [] : [
+  const navigationLinks = (isKitchen ? [] : isCustomerTracking ? [
+    ["Back to Menu", "/menu"] as [string, string]
+  ] : [
     restaurantConfig.navigation.showMenuLink
       ? [isAdminRoute ? "View Menu" : restaurantConfig.navigation.menuLabel, "/menu"]
       : null,
@@ -83,6 +86,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           )}
           <div className="flex items-center gap-2">
+            {isCustomerTracking && (
+              <Link
+                href="/menu"
+                className="pressable rounded-button border border-white/[0.09] bg-white/[0.055] px-3 py-2 text-sm font-medium text-white hover:bg-white/[0.09] light:border-black/[0.08] light:bg-black/[0.045] light:text-black md:hidden"
+              >
+                Back to Menu
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setLight((value) => !value)}
@@ -102,7 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {isFullscreen ? <Minimize size={18} /> : <Expand size={18} />}
               </button>
             )}
-            {!isKitchen && !isAdminRoute && restaurantConfig.navigation.showTryDemoButton && (
+            {!isKitchen && !isAdminRoute && !isCustomerTracking && restaurantConfig.navigation.showTryDemoButton && (
               <Link
                 href="/menu"
                 className={cn(
