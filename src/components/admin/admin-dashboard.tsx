@@ -6,11 +6,13 @@ import {
   Activity,
   AlertTriangle,
   ChefHat,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Power,
   QrCode,
   RefreshCcw,
+  Search,
   Settings,
   Table2,
   Utensils,
@@ -28,15 +30,23 @@ import {
   toggleOrderingAction
 } from "@/actions/admin-actions";
 import { DailyReportingSection } from "@/components/admin/daily-reporting-section";
+import { restaurantConfig } from "@/config/restaurant";
+import { formatReportLocalDateTime } from "@/lib/reporting/date-ranges";
 import { buildTableMenuUrl } from "@/lib/table-resolution";
 import { updateTableStatusAction } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import type { AdminReportActionResult } from "@/lib/reporting/admin-report";
 import { currency, statusLabel } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
-import type { TableStatus } from "@/types";
+import type { OrderStatus, TableStatus } from "@/types";
 
 const tableStatuses: TableStatus[] = ["available", "occupied", "needs_bill", "cleaning"];
+const adminOrderStatusStyles: Record<OrderStatus, string> = {
+  new: "bg-[rgb(var(--color-primary))] text-white ring-[rgb(var(--color-primary)/0.16)] shadow-[0_8px_18px_rgb(var(--color-primary)/0.2)]",
+  preparing: "bg-amber-500 text-slate-950 ring-amber-600/10 shadow-[0_8px_18px_rgba(245,158,11,0.16)]",
+  ready: "bg-emerald-600 text-white ring-emerald-700/10 shadow-[0_8px_18px_rgba(5,150,105,0.16)]",
+  completed: "bg-slate-600 text-white ring-slate-700/10 shadow-[0_8px_18px_rgba(71,85,105,0.14)]"
+};
 const adminTableStatusStyles: Record<TableStatus, string> = {
   available: "bg-emerald-600 text-white ring-emerald-700/10 shadow-[0_8px_18px_rgba(5,150,105,0.18)]",
   occupied: "bg-amber-500 text-slate-950 ring-amber-600/10 shadow-[0_8px_18px_rgba(245,158,11,0.16)]",
@@ -51,6 +61,7 @@ export function AdminDashboard({
   initialSnapshot: RestaurantSnapshot;
   initialReportResult: AdminReportActionResult;
 }) {
+  const [orderQuery, setOrderQuery] = useState("");
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const { snapshot, refreshAll, refreshTables, isRefreshing, syncError, isRealtimeConnected } =
     useRestaurantRealtime(initialSnapshot);
@@ -91,6 +102,19 @@ export function AdminDashboard({
         )
         .join("|"),
     [orders]
+  );
+  const filteredOperationalOrders = useMemo(
+    () => {
+      const normalizedQuery = orderQuery.trim().toLowerCase();
+      if (!normalizedQuery) return orders;
+
+      return orders.filter(
+        (order) =>
+          order.orderNumber.toLowerCase().includes(normalizedQuery) ||
+          order.tableNumber.toLowerCase().includes(normalizedQuery)
+      );
+    },
+    [orders, orderQuery]
   );
 
   async function downloadQr(tableNumber: string) {
@@ -254,6 +278,73 @@ export function AdminDashboard({
             restaurantName={settings.name}
             liveOrdersRevision={liveOrdersRevision}
           />
+
+          <section aria-labelledby="orders-heading" className="space-y-4">
+            <SectionHeader
+              eyebrow="Orders"
+              title="Recent operational orders"
+              description="Search the current live operational window. Use Daily Reporting above for complete range history and CSV export."
+              icon={<ClipboardList size={18} />}
+            />
+            <Panel>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <label className="flex min-h-11 w-full items-center gap-2 rounded-button border border-slate-200 bg-slate-50 px-3 text-slate-600 sm:max-w-sm">
+                  <Search size={16} />
+                  <input
+                    type="search"
+                    value={orderQuery}
+                    onChange={(event) => setOrderQuery(event.target.value)}
+                    placeholder="Search table or order #"
+                    aria-label="Search recent operational orders"
+                    className="w-full bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                  />
+                </label>
+                <span className="text-sm font-semibold text-slate-500">
+                  {filteredOperationalOrders.length} matching orders
+                </span>
+              </div>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-400">
+                    <tr>
+                      <th className="py-3 pr-4">Order</th>
+                      <th className="pr-4">Table</th>
+                      <th className="pr-4">Status</th>
+                      <th className="pr-4">Total</th>
+                      <th>Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {orders.length === 0 ? (
+                      <tr className="text-slate-500">
+                        <td colSpan={5} className="py-10 text-center">
+                          No recent operational orders are available in the current live window.
+                        </td>
+                      </tr>
+                    ) : filteredOperationalOrders.length === 0 ? (
+                      <tr className="text-slate-500">
+                        <td colSpan={5} className="py-10 text-center">
+                          No orders match this search.
+                        </td>
+                      </tr>
+                    ) : filteredOperationalOrders.map((order) => (
+                      <tr key={order.id} className="text-slate-700">
+                        <td className="py-4 pr-4 font-black text-slate-950">{order.orderNumber}</td>
+                        <td className="pr-4 font-bold">Table {order.tableNumber}</td>
+                        <td className="pr-4">
+                          <AdminOrderStatusBadge status={order.status} />
+                        </td>
+                        <td className="pr-4 font-bold">{currency(order.subtotal)}</td>
+                        <td className="text-slate-500">
+                          {formatReportLocalDateTime(order.createdAt, restaurantConfig.timeZone)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Panel>
+          </section>
 
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <section aria-labelledby="menu-heading" className="space-y-4">
@@ -501,6 +592,16 @@ function AdminTableStatusBadge({ status }: { status: TableStatus }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ring-1 ${adminTableStatusStyles[status]}`}
+    >
+      {statusLabel(status)}
+    </span>
+  );
+}
+
+function AdminOrderStatusBadge({ status }: { status: OrderStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ring-1 ${adminOrderStatusStyles[status]}`}
     >
       {statusLabel(status)}
     </span>
