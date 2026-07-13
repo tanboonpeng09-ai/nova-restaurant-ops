@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertTriangle,
   ChefHat,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   LayoutDashboard,
   LogOut,
@@ -70,7 +72,13 @@ export function AdminDashboard({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
+  const [isDataMaintenanceOpen, setIsDataMaintenanceOpen] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const dataMaintenanceTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const clearOrderDataTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const focusFrameRef = useRef<number | null>(null);
+  const resetSubmissionRef = useRef(false);
   const { snapshot, refreshAll, refreshTables, isRefreshing, syncError, isRealtimeConnected } =
     useRestaurantRealtime(initialSnapshot);
   const { settings, categories, menuItems, orders, tables, staffRequests } = snapshot;
@@ -135,6 +143,26 @@ export function AdminDashboard({
     }
   }, [categories, selectedCategoryId]);
 
+  useEffect(() => {
+    if (!isResetDialogOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && busyAction !== "reset") {
+        setIsResetDialogOpen(false);
+        scheduleButtonFocus(focusFrameRef, clearOrderDataTriggerRef);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [busyAction, isResetDialogOpen]);
+
+  useEffect(() => {
+    return () => {
+      cancelScheduledFocus(focusFrameRef);
+    };
+  }, []);
+
   async function downloadQr(tableNumber: string) {
     const url = buildTableMenuUrl(window.location.origin, tableNumber);
     const dataUrl = await QRCode.toDataURL(url, { margin: 2, width: 512 });
@@ -168,8 +196,8 @@ export function AdminDashboard({
     actionKey: string,
     action: () => Promise<void | AdminActionResult>,
     successMessage: string
-  ) {
-    if (busyAction) return;
+  ): Promise<boolean> {
+    if (busyAction) return false;
 
     setBusyAction(actionKey);
     try {
@@ -178,10 +206,41 @@ export function AdminDashboard({
         throw new Error(result.error ?? "Action failed.");
       }
       toast.success(successMessage);
+      return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Action failed.");
+      return false;
     } finally {
       setBusyAction(null);
+    }
+  }
+
+  function closeResetDialog() {
+    if (busyAction === "reset") return;
+
+    setIsResetDialogOpen(false);
+    scheduleButtonFocus(focusFrameRef, clearOrderDataTriggerRef);
+  }
+
+  async function confirmClearOrderData() {
+    if (resetSubmissionRef.current) return;
+
+    resetSubmissionRef.current = true;
+    try {
+      const didClearOrderData = await runAdminAction("reset", async () => {
+        const result = await resetDemoAction();
+        if (!result.ok) return result;
+
+        await refreshAll();
+      }, "Order activity cleared.");
+
+      if (didClearOrderData) {
+        setIsResetDialogOpen(false);
+        setIsDataMaintenanceOpen(false);
+        scheduleButtonFocus(focusFrameRef, dataMaintenanceTriggerRef);
+      }
+    } finally {
+      resetSubmissionRef.current = false;
     }
   }
 
@@ -523,6 +582,7 @@ export function AdminDashboard({
                 icon={<Table2 size={18} />}
                 action={
                   <button
+                    ref={dataMaintenanceTriggerRef}
                     type="button"
                     onClick={downloadQrPdf}
                     disabled={tables.length === 0}
@@ -615,45 +675,73 @@ export function AdminDashboard({
               </Panel>
             </section>
 
-            <section aria-labelledby="system-heading" className="space-y-4">
+            <section aria-labelledby="system-heading" className="min-w-0 space-y-4">
               <SectionHeader
-                eyebrow="System"
-                title="Demo tools"
-                description="Destructive controls are isolated from daily operations."
-                icon={<AlertTriangle size={18} />}
+                eyebrow="Advanced"
+                title="Data maintenance"
+                description="Manage stored order and service activity for this restaurant."
+                icon={<Settings size={18} />}
               />
-              <Panel className="border-rose-200 bg-rose-50">
-                <div className="flex items-start gap-3">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-700">
-                    <AlertTriangle size={18} />
-                  </span>
-                  <div>
-                    <h3 className="font-black text-rose-950">Reset demo data</h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-rose-700">
-                      Clears demo orders and requests, then returns active tables to available.
+              <Panel className="min-w-0 max-w-full">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-6 text-slate-500">
+                      Data controls are kept separate from daily restaurant operations.
                     </p>
                   </div>
+                  <button
+                    type="button"
+                    aria-expanded={isDataMaintenanceOpen}
+                    aria-controls="data-maintenance-controls"
+                    onClick={() => setIsDataMaintenanceOpen((isOpen) => !isOpen)}
+                    className="pressable inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-slate-50"
+                  >
+                    {isDataMaintenanceOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    {isDataMaintenanceOpen ? "Hide data controls" : "Manage data"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!window.confirm("Reset demo orders and requests? This cannot be undone.")) return;
-                    void runAdminAction("reset", async () => {
-                      await resetDemoAction();
-                      await refreshAll();
-                    }, "Demo data reset.");
-                  }}
-                  disabled={busyAction !== null}
-                  className="pressable mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-button bg-rose-600 px-4 py-2.5 text-sm font-black text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-200 disabled:text-rose-400"
-                >
-                  <RefreshCcw size={16} />
-                  {busyAction === "reset" ? "Resetting..." : "Reset Demo"}
-                </button>
+
+                {isDataMaintenanceOpen ? (
+                  <div id="data-maintenance-controls" className="mt-5 border-t border-slate-200 pt-5">
+                    <div className="rounded-[18px] border border-rose-200 bg-rose-50/50 p-4 sm:p-5">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-700">
+                          <AlertTriangle size={18} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-rose-600">Danger zone</p>
+                          <h3 className="mt-1 font-black text-slate-950">Clear order activity</h3>
+                          <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
+                            Permanently deletes all orders, order items, and service requests, then returns active tables to Available. Menu items, categories, restaurant settings, admin accounts, and staff access are not affected.
+                          </p>
+                          <p className="mt-3 text-sm font-black text-rose-700">This action cannot be undone.</p>
+                        </div>
+                      </div>
+                      <button
+                        ref={clearOrderDataTriggerRef}
+                        type="button"
+                        aria-controls="clear-order-activity-dialog"
+                        onClick={() => setIsResetDialogOpen(true)}
+                        disabled={busyAction !== null}
+                        className="pressable mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-button bg-rose-600 px-4 py-2.5 text-sm font-black text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-200 disabled:text-rose-400"
+                      >
+                        <RefreshCcw size={16} />
+                        Clear all order data
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </Panel>
             </section>
           </div>
         </main>
       </div>
+      <ConfirmationDialog
+        open={isResetDialogOpen}
+        isSubmitting={busyAction === "reset"}
+        onClose={closeResetDialog}
+        onConfirm={() => void confirmClearOrderData()}
+      />
     </div>
   );
 }
@@ -836,6 +924,92 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-[18px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-500 md:col-span-full">
       {children}
+    </div>
+  );
+}
+
+function scheduleButtonFocus(
+  frameRef: { current: number | null },
+  buttonRef: { current: HTMLButtonElement | null }
+) {
+  cancelScheduledFocus(frameRef);
+
+  frameRef.current = window.requestAnimationFrame(() => {
+    frameRef.current = null;
+    buttonRef.current?.focus();
+  });
+}
+
+function cancelScheduledFocus(frameRef: { current: number | null }) {
+  if (frameRef.current !== null) {
+    window.cancelAnimationFrame(frameRef.current);
+    frameRef.current = null;
+  }
+}
+
+function ConfirmationDialog({
+  open,
+  isSubmitting,
+  onClose,
+  onConfirm
+}: {
+  open: boolean;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose();
+      }}
+    >
+      <section
+        id="clear-order-activity-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="clear-order-activity-title"
+        aria-describedby="clear-order-activity-description"
+        className="w-full max-w-lg rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.28)] sm:p-6"
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-700">
+            <AlertTriangle size={18} />
+          </span>
+          <div className="min-w-0">
+            <h2 id="clear-order-activity-title" className="text-xl font-black tracking-[-0.025em] text-slate-950">
+              Clear all order activity?
+            </h2>
+            <div id="clear-order-activity-description" className="mt-3 space-y-3 text-sm font-medium leading-6 text-slate-600">
+              <p>This permanently deletes all orders, order items, and service requests, then returns active tables to Available.</p>
+              <p>Menu items, categories, restaurant settings, admin accounts, and staff access will not be changed.</p>
+              <p className="font-black text-rose-700">This action cannot be undone.</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            autoFocus
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="pressable min-h-11 rounded-button border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isSubmitting}
+            className="pressable min-h-11 rounded-button bg-rose-600 px-4 py-2.5 text-sm font-black text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-200 disabled:text-rose-400"
+          >
+            {isSubmitting ? "Clearing..." : "Clear all order data"}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
