@@ -38,6 +38,11 @@ import {
   type AvailabilityFilter
 } from "@/lib/admin-menu-availability-filter";
 import { matchesAdminOrderSearch } from "@/lib/admin-order-search";
+import {
+  filterAdminTables,
+  getAdminTablePagination,
+  normalizeAdminTableSearch
+} from "@/lib/admin-table-operations";
 import { formatReportLocalDateTime } from "@/lib/reporting/date-ranges";
 import { buildTableMenuUrl } from "@/lib/table-resolution";
 import {
@@ -77,12 +82,16 @@ export function AdminDashboard({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
+  const [tableQuery, setTableQuery] = useState("");
+  const [tablePage, setTablePage] = useState(1);
   const [isDataMaintenanceOpen, setIsDataMaintenanceOpen] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const dataMaintenanceTriggerRef = useRef<HTMLButtonElement | null>(null);
   const clearOrderDataTriggerRef = useRef<HTMLButtonElement | null>(null);
   const focusFrameRef = useRef<number | null>(null);
+  const tableOperationsResultsRef = useRef<HTMLDivElement | null>(null);
+  const tablePaginationScrollFrameRef = useRef<number | null>(null);
   const resetSubmissionRef = useRef(false);
   const { snapshot, refreshAll, refreshTables, isRefreshing, syncError, isRealtimeConnected } =
     useRestaurantRealtime(initialSnapshot);
@@ -95,6 +104,16 @@ export function AdminDashboard({
         ? "Realtime connected"
         : "Realtime reconnecting");
   const sortedTables = useMemo(() => sortTablesForAdmin(tables), [tables]);
+  const normalizedTableQuery = normalizeAdminTableSearch(tableQuery);
+  const filteredTables = useMemo(
+    () => filterAdminTables(sortedTables, tableQuery),
+    [sortedTables, tableQuery]
+  );
+  const tablePagination = useMemo(
+    () => getAdminTablePagination(filteredTables.length, tablePage),
+    [filteredTables.length, tablePage]
+  );
+  const visibleTables = filteredTables.slice(tablePagination.startIndex, tablePagination.endIndex);
   const liveStats: Array<{ label: string; value: string | number; detail: string }> = [
     {
       label: "Active Orders",
@@ -149,6 +168,10 @@ export function AdminDashboard({
   }, [categories, selectedCategoryId]);
 
   useEffect(() => {
+    if (tablePage !== tablePagination.page) setTablePage(tablePagination.page);
+  }, [tablePage, tablePagination.page]);
+
+  useEffect(() => {
     if (!isResetDialogOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -165,6 +188,7 @@ export function AdminDashboard({
   useEffect(() => {
     return () => {
       cancelScheduledFocus(focusFrameRef);
+      cancelScheduledTableOperationsScroll(tablePaginationScrollFrameRef);
     };
   }, []);
 
@@ -265,6 +289,14 @@ export function AdminDashboard({
     } finally {
       resetSubmissionRef.current = false;
     }
+  }
+
+  function changeTablePage(requestedPage: number) {
+    const nextPagination = getAdminTablePagination(filteredTables.length, requestedPage);
+    if (nextPagination.page === tablePagination.page) return;
+
+    setTablePage(nextPagination.page);
+    scheduleTableOperationsScroll(tablePaginationScrollFrameRef, tableOperationsResultsRef);
   }
 
   return (
@@ -617,45 +649,124 @@ export function AdminDashboard({
                 }
               />
               <Panel>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {tables.length === 0 ? (
-                    <EmptyState>No active tables are configured.</EmptyState>
-                  ) : sortedTables.map((table) => (
-                    <div key={table.id} className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-black text-slate-950">{table.label}</p>
-                        <AdminTableStatusBadge status={table.status} />
-                      </div>
-                      <select
-                        value={table.status}
-                        onChange={async (event) => {
-                          await runAdminAction(`table-${table.id}`, async () => {
-                            await updateTableStatusAction({
-                              tableId: table.id,
-                              status: event.target.value as TableStatus
-                            });
-                            await refreshTables();
-                          }, "Table status updated.");
-                        }}
-                        disabled={busyAction !== null}
-                        className="mt-3 min-h-11 w-full rounded-button border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
-                      >
-                        {tableStatuses.map((status) => (
-                          <option key={status} value={status}>
-                            {statusLabel(status)}
-                          </option>
-                        ))}
-                      </select>
+                <div ref={tableOperationsResultsRef} className="scroll-mt-24">
+                  <label className="flex min-h-11 w-full min-w-0 items-center gap-2 rounded-button border border-slate-200 bg-slate-50 px-3 text-slate-600">
+                    <Search size={16} />
+                    <input
+                      type="search"
+                      value={tableQuery}
+                      onChange={(event) => {
+                        setTableQuery(event.target.value);
+                        setTablePage(1);
+                      }}
+                      placeholder="Search tables"
+                      aria-label="Search tables"
+                      className="w-full min-w-0 bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                    />
+                  </label>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-y border-slate-100 py-3">
+                    <p className="text-sm font-semibold text-slate-500">
+                      {filteredTables.length === 0
+                        ? `Showing 0–0 of 0${normalizedTableQuery ? " matching" : ""} tables`
+                        : `Showing ${tablePagination.startIndex + 1}–${tablePagination.endIndex} of ${filteredTables.length}${normalizedTableQuery ? " matching" : ""} ${filteredTables.length === 1 ? "table" : "tables"}`}
+                    </p>
+                    {normalizedTableQuery ? (
                       <button
                         type="button"
-                        onClick={() => downloadQr(table.number)}
-                        className="pressable mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 hover:bg-slate-50"
+                        onClick={() => {
+                          setTableQuery("");
+                          setTablePage(1);
+                        }}
+                        className="pressable min-h-10 rounded-button border border-slate-200 bg-white px-3 text-sm font-black text-slate-600 hover:bg-slate-50"
                       >
-                        <QrCode size={16} />
-                        Download QR
+                        Clear search
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {tables.length === 0 ? (
+                    <EmptyState>No tables are available.</EmptyState>
+                  ) : filteredTables.length === 0 ? (
+                    <EmptyState>
+                      No tables match “{normalizedTableQuery}”.
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTableQuery("");
+                          setTablePage(1);
+                        }}
+                        className="pressable mt-3 min-h-10 rounded-button border border-slate-200 bg-white px-3 text-sm font-black text-slate-600 hover:bg-slate-100"
+                      >
+                        Clear search
+                      </button>
+                    </EmptyState>
+                  ) : (
+                    <>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        {visibleTables.map((table) => (
+                          <div key={table.id} className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="font-black text-slate-950">{table.label}</p>
+                              <AdminTableStatusBadge status={table.status} />
+                            </div>
+                            <select
+                              value={table.status}
+                              onChange={async (event) => {
+                                await runAdminAction(`table-${table.id}`, async () => {
+                                  await updateTableStatusAction({
+                                    tableId: table.id,
+                                    status: event.target.value as TableStatus
+                                  });
+                                  await refreshTables();
+                                }, "Table status updated.");
+                              }}
+                              disabled={busyAction !== null}
+                              className="mt-3 min-h-11 w-full rounded-button border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+                            >
+                              {tableStatuses.map((status) => (
+                                <option key={status} value={status}>
+                                  {statusLabel(status)}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => downloadQr(table.number)}
+                              className="pressable mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 hover:bg-slate-50"
+                            >
+                              <QrCode size={16} />
+                              Download QR
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {tables.length > 0 ? (
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => changeTablePage(tablePagination.page - 1)}
+                        disabled={tablePagination.page === 1}
+                        className="pressable min-h-10 rounded-button border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      >
+                        Previous
+                      </button>
+                      <p className="text-sm font-black text-slate-600">
+                        Page {tablePagination.page} of {tablePagination.pageCount}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => changeTablePage(tablePagination.page + 1)}
+                        disabled={tablePagination.page === tablePagination.pageCount}
+                        className="pressable min-h-10 rounded-button border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      >
+                        Next
                       </button>
                     </div>
-                  ))}
+                  ) : null}
                 </div>
               </Panel>
             </section>
@@ -964,6 +1075,29 @@ function scheduleButtonFocus(
 }
 
 function cancelScheduledFocus(frameRef: { current: number | null }) {
+  if (frameRef.current !== null) {
+    window.cancelAnimationFrame(frameRef.current);
+    frameRef.current = null;
+  }
+}
+
+function scheduleTableOperationsScroll(
+  frameRef: { current: number | null },
+  resultsRef: { current: HTMLDivElement | null }
+) {
+  cancelScheduledTableOperationsScroll(frameRef);
+
+  frameRef.current = window.requestAnimationFrame(() => {
+    frameRef.current = null;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resultsRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start"
+    });
+  });
+}
+
+function cancelScheduledTableOperationsScroll(frameRef: { current: number | null }) {
   if (frameRef.current !== null) {
     window.cancelAnimationFrame(frameRef.current);
     frameRef.current = null;
