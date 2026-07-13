@@ -221,12 +221,12 @@ export function DailyReportingSection({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
+            <div className="flex h-full min-h-[360px] flex-col rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
               <ReportPanelTitle icon={<BarChart3 size={18} />} title="Busy hours" subtitle="All created orders, grouped in the restaurant timezone." />
               {report.busyHours.length === 0 ? (
                 <ReportEmptyState>No order activity in this range.</ReportEmptyState>
               ) : (
-                <div className="mt-5 h-72">
+                <div className="mt-5 min-h-[240px] flex-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={report.busyHours}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.28)" />
@@ -247,13 +247,13 @@ export function DailyReportingSection({
               )}
             </div>
 
-            <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
+            <div className="flex h-full min-h-[360px] flex-col rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
               <ReportPanelTitle icon={<TrendingUp size={18} />} title="Popular completed items" subtitle="Item quantities from completed orders only." />
               {report.popularItems.length === 0 ? (
                 <ReportEmptyState>No completed items in this range.</ReportEmptyState>
               ) : (
-                <div className="mt-5 space-y-2">
-                  {report.popularItems.slice(0, 8).map((item, index) => (
+                <div className="mt-5 min-h-0 max-h-72 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
+                  {report.popularItems.map((item, index) => (
                     <div key={item.itemName} className="flex items-center justify-between gap-4 rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3">
                       <span className="min-w-0 truncate font-bold text-slate-950">
                         {index + 1}. {item.itemName}
