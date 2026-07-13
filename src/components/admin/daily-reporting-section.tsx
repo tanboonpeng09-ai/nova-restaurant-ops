@@ -12,6 +12,8 @@ import {
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { loadAdminReportAction } from "@/actions/admin-actions";
 import { restaurantConfig } from "@/config/restaurant";
+import { matchesAdminOrderSearch } from "@/lib/admin-order-search";
+import { getAdminOrderTablePagination } from "@/lib/admin-order-table-pagination";
 import {
   buildReportCsv,
   getReportCsvFilename,
@@ -53,15 +55,26 @@ export function DailyReportingSection({
     initialReportResult.ok ? null : "today"
   );
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const activeRangeRef = useRef(activeRange);
   const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRevisionRef = useRef(true);
   const requestIdRef = useRef(0);
   const rangeSwitchPendingRef = useRef(false);
+  const orderResultsRef = useRef<HTMLDivElement | null>(null);
+  const paginationScrollFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     activeRangeRef.current = activeRange;
   }, [activeRange]);
+
+  useEffect(() => {
+    return () => {
+      if (paginationScrollFrameRef.current !== null) {
+        cancelAnimationFrame(paginationScrollFrameRef.current);
+      }
+    };
+  }, []);
 
   const loadRange = useCallback(async (range: ReportRange, background = false) => {
     if (background && rangeSwitchPendingRef.current) return;
@@ -73,6 +86,7 @@ export function DailyReportingSection({
     else {
       rangeSwitchPendingRef.current = true;
       setPendingRange(range);
+      setPage(1);
     }
     setError(null);
 
@@ -115,15 +129,34 @@ export function DailyReportingSection({
 
   const filteredOrders = useMemo(() => {
     if (!report) return [];
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return report.orders;
-
-    return report.orders.filter(
-      (order) =>
-        order.tableNumber.toLowerCase().includes(normalizedQuery) ||
-        order.orderNumber.toLowerCase().includes(normalizedQuery)
+    return report.orders.filter((order) =>
+      matchesAdminOrderSearch(order.orderNumber, order.tableNumber, query)
     );
   }, [query, report]);
+  const orderPagination = getAdminOrderTablePagination(filteredOrders.length, page);
+  const paginatedOrders = filteredOrders.slice(orderPagination.startIndex, orderPagination.endIndex);
+
+  useEffect(() => {
+    if (page !== orderPagination.page) setPage(orderPagination.page);
+  }, [orderPagination.page, page]);
+
+  function changeOrderPage(nextPage: number) {
+    setPage(nextPage);
+    if (paginationScrollFrameRef.current !== null) {
+      cancelAnimationFrame(paginationScrollFrameRef.current);
+    }
+
+    paginationScrollFrameRef.current = requestAnimationFrame(() => {
+      paginationScrollFrameRef.current = null;
+      const orderResults = orderResultsRef.current;
+      if (!orderResults) return;
+
+      orderResults.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start"
+      });
+    });
+  }
 
   function exportCsv() {
     if (!report) return;
@@ -282,52 +315,81 @@ export function DailyReportingSection({
               </button>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="flex min-h-11 w-full items-center gap-2 rounded-button border border-slate-200 bg-slate-50 px-3 text-slate-600 sm:max-w-sm">
-                <Search size={16} />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search table or order #"
-                  className="w-full bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
-                />
-              </label>
-              <span className="text-sm font-semibold text-slate-500">{filteredOrders.length} matching orders</span>
-            </div>
+            <div ref={orderResultsRef} className="mt-4 scroll-mt-24">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <label className="flex min-h-11 w-full items-center gap-2 rounded-button border border-slate-200 bg-slate-50 px-3 text-slate-600 sm:max-w-sm">
+                  <Search size={16} />
+                  <input
+                    value={query}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Search table or order #"
+                    className="w-full bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                  />
+                </label>
+                <span className="text-sm font-semibold text-slate-500">{filteredOrders.length} matching orders</span>
+              </div>
 
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[820px] text-left text-sm">
-                <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-400">
-                  <tr>
-                    <th className="py-3 pr-4">Order</th>
-                    <th className="pr-4">Table</th>
-                    <th className="pr-4">Status</th>
-                    <th className="pr-4">Subtotal</th>
-                    <th>Created Local</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredOrders.length === 0 ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[820px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-400">
                     <tr>
-                      <td colSpan={5} className="py-10 text-center font-semibold text-slate-500">
-                        No orders match this reporting view.
-                      </td>
+                      <th className="py-3 pr-4">Order</th>
+                      <th className="pr-4">Table</th>
+                      <th className="pr-4">Status</th>
+                      <th className="pr-4">Subtotal</th>
+                      <th>Created Local</th>
                     </tr>
-                  ) : filteredOrders.map((order) => (
-                    <tr key={order.id} className="text-slate-700">
-                      <td className="py-4 pr-4 font-black text-slate-950">{order.orderNumber}</td>
-                      <td className="pr-4 font-bold">Table {order.tableNumber}</td>
-                      <td className="pr-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${reportStatusStyles[order.status]}`}>
-                          {statusLabel(order.status)}
-                        </span>
-                      </td>
-                      <td className="pr-4 font-bold">{currency(order.subtotal)}</td>
-                      <td className="text-slate-500">{formatReportLocalDateTime(order.createdAt, report.bounds.timeZone)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center font-semibold text-slate-500">
+                          No orders match this reporting view.
+                        </td>
+                      </tr>
+                    ) : paginatedOrders.map((order) => (
+                      <tr key={order.id} className="text-slate-700">
+                        <td className="py-4 pr-4 font-black text-slate-950">{order.orderNumber}</td>
+                        <td className="pr-4 font-bold">Table {order.tableNumber}</td>
+                        <td className="pr-4">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${reportStatusStyles[order.status]}`}>
+                            {statusLabel(order.status)}
+                          </span>
+                        </td>
+                        <td className="pr-4 font-bold">{currency(order.subtotal)}</td>
+                        <td className="text-slate-500">{formatReportLocalDateTime(order.createdAt, report.bounds.timeZone)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <span className="text-sm font-semibold text-slate-500">
+                  Page {orderPagination.page} of {orderPagination.pageCount}
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => changeOrderPage(orderPagination.page - 1)}
+                    disabled={orderPagination.page === 1}
+                    className="pressable inline-flex min-h-10 items-center justify-center rounded-button border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeOrderPage(orderPagination.page + 1)}
+                    disabled={orderPagination.page === orderPagination.pageCount}
+                    className="pressable inline-flex min-h-10 items-center justify-center rounded-button border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

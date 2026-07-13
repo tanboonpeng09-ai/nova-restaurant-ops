@@ -31,6 +31,7 @@ import {
 } from "@/actions/admin-actions";
 import { DailyReportingSection } from "@/components/admin/daily-reporting-section";
 import { restaurantConfig } from "@/config/restaurant";
+import { matchesAdminOrderSearch } from "@/lib/admin-order-search";
 import { formatReportLocalDateTime } from "@/lib/reporting/date-ranges";
 import { buildTableMenuUrl } from "@/lib/table-resolution";
 import { updateTableStatusAction } from "@/actions/order-actions";
@@ -104,16 +105,7 @@ export function AdminDashboard({
     [orders]
   );
   const filteredOperationalOrders = useMemo(
-    () => {
-      const normalizedQuery = orderQuery.trim().toLowerCase();
-      if (!normalizedQuery) return orders;
-
-      return orders.filter(
-        (order) =>
-          order.orderNumber.toLowerCase().includes(normalizedQuery) ||
-          order.tableNumber.toLowerCase().includes(normalizedQuery)
-      );
-    },
+    () => orders.filter((order) => matchesAdminOrderSearch(order.orderNumber, order.tableNumber, orderQuery)),
     [orders, orderQuery]
   );
 
@@ -303,9 +295,9 @@ export function AdminDashboard({
                   {filteredOperationalOrders.length} matching orders
                 </span>
               </div>
-              <div className="mt-4 overflow-x-auto">
+              <div className="mt-4 max-h-[520px] overflow-auto overscroll-contain">
                 <table className="w-full min-w-[760px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-400">
+                  <thead className="sticky top-0 z-10 border-b border-slate-200 bg-white text-xs uppercase tracking-[0.14em] text-slate-400">
                     <tr>
                       <th className="py-3 pr-4">Order</th>
                       <th className="pr-4">Table</th>
