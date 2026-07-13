@@ -40,6 +40,11 @@ import {
 import { matchesAdminOrderSearch } from "@/lib/admin-order-search";
 import { formatReportLocalDateTime } from "@/lib/reporting/date-ranges";
 import { buildTableMenuUrl } from "@/lib/table-resolution";
+import {
+  buildTableQrPdfLayout,
+  QR_SIZE_MM,
+  sortTablesForQrPdf
+} from "@/lib/table-qr-pdf-layout";
 import { updateTableStatusAction } from "@/actions/order-actions";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
 import type { AdminReportActionResult } from "@/lib/reporting/admin-report";
@@ -173,22 +178,40 @@ export function AdminDashboard({
   }
 
   async function downloadQrPdf() {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text(`${settings.name} Table QR Codes`, 16, 18);
     const activeTables = tables.filter((table) => table.isActive);
-    for (let index = 0; index < activeTables.length; index += 1) {
-      const table = activeTables[index];
-      const x = 16 + (index % 3) * 62;
-      const y = 30 + Math.floor(index / 3) * 62;
-      const dataUrl = await QRCode.toDataURL(buildTableMenuUrl(window.location.origin, table.number), {
-        margin: 1,
-        width: 160
-      });
-      doc.addImage(dataUrl, "PNG", x, y, 42, 42);
-      doc.setFontSize(10);
-      doc.text(table.label, x, y + 48);
+    const layout = buildTableQrPdfLayout(sortTablesForQrPdf(activeTables));
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+
+    if (layout.pageCount === 0) {
+      doc.setFontSize(18);
+      doc.text(`${settings.name} Table QR Codes`, 16, 18);
+      doc.save(`${slugify(settings.name)}-table-qr-sheet.pdf`);
+      return;
     }
+
+    for (let pageIndex = 0; pageIndex < layout.pageCount; pageIndex += 1) {
+      if (pageIndex > 0) doc.addPage("a4", "portrait");
+
+      doc.setFontSize(18);
+      doc.text(`${settings.name} Table QR Codes`, 16, 18);
+      doc.setFontSize(10);
+      doc.text(`Page ${pageIndex + 1} of ${layout.pageCount}`, 194, 18, { align: "right" });
+
+      const pageSlots = layout.slots.filter((slot) => slot.pageIndex === pageIndex);
+      for (const slot of pageSlots) {
+        const dataUrl = await QRCode.toDataURL(buildTableMenuUrl(window.location.origin, slot.table.number), {
+          margin: 1,
+          width: 160
+        });
+        doc.addImage(dataUrl, "PNG", slot.x, slot.y, QR_SIZE_MM, QR_SIZE_MM);
+        doc.text(slot.table.label, slot.x, slot.labelY);
+      }
+    }
+
     doc.save(`${slugify(settings.name)}-table-qr-sheet.pdf`);
   }
 
