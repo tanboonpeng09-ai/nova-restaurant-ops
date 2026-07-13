@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -31,6 +31,10 @@ import {
 } from "@/actions/admin-actions";
 import { DailyReportingSection } from "@/components/admin/daily-reporting-section";
 import { restaurantConfig } from "@/config/restaurant";
+import {
+  filterAdminMenuAvailability,
+  type AvailabilityFilter
+} from "@/lib/admin-menu-availability-filter";
 import { matchesAdminOrderSearch } from "@/lib/admin-order-search";
 import { formatReportLocalDateTime } from "@/lib/reporting/date-ranges";
 import { buildTableMenuUrl } from "@/lib/table-resolution";
@@ -63,10 +67,13 @@ export function AdminDashboard({
   initialReportResult: AdminReportActionResult;
 }) {
   const [orderQuery, setOrderQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const { snapshot, refreshAll, refreshTables, isRefreshing, syncError, isRealtimeConnected } =
     useRestaurantRealtime(initialSnapshot);
-  const { settings, menuItems, orders, tables, staffRequests } = snapshot;
+  const { settings, categories, menuItems, orders, tables, staffRequests } = snapshot;
 
   const syncLabel = syncError ??
     (isRefreshing
@@ -108,6 +115,25 @@ export function AdminDashboard({
     () => orders.filter((order) => matchesAdminOrderSearch(order.orderNumber, order.tableNumber, orderQuery)),
     [orders, orderQuery]
   );
+  const menuAvailability = useMemo(
+    () =>
+      filterAdminMenuAvailability(menuItems, {
+        searchQuery,
+        selectedCategoryId,
+        availabilityFilter
+      }),
+    [availabilityFilter, menuItems, searchQuery, selectedCategoryId]
+  );
+  const hasAvailabilityFilters =
+    menuAvailability.normalizedSearchQuery.length > 0 ||
+    selectedCategoryId !== null ||
+    availabilityFilter !== "all";
+
+  useEffect(() => {
+    if (selectedCategoryId !== null && !categories.some((category) => category.id === selectedCategoryId)) {
+      setSelectedCategoryId(null);
+    }
+  }, [categories, selectedCategoryId]);
 
   async function downloadQr(tableNumber: string) {
     const url = buildTableMenuUrl(window.location.origin, tableNumber);
@@ -338,46 +364,153 @@ export function AdminDashboard({
             </Panel>
           </section>
 
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <section aria-labelledby="menu-heading" className="space-y-4">
+          <div className="grid min-w-0 max-w-full gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <section aria-labelledby="menu-heading" className="min-w-0 max-w-full space-y-4">
               <SectionHeader
                 eyebrow="Menu"
                 title="Availability controls"
                 description="Keep current item availability updated without changing menu structure."
                 icon={<Utensils size={18} />}
               />
-              <Panel>
-                <div className="grid gap-3">
-                  {menuItems.length === 0 ? (
-                    <EmptyState>No menu items are available.</EmptyState>
-                  ) : menuItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-4 rounded-[18px] border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-black text-slate-950">{item.name}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-500">{currency(item.price)}</p>
+              <Panel className="min-w-0 max-w-full overflow-hidden">
+                <div className="min-w-0 space-y-4">
+                  <label className="flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-button border border-orange-100 bg-orange-50/70 px-3 text-orange-700">
+                    <Search size={16} />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Search menu items"
+                      aria-label="Search menu items for availability controls"
+                      className="w-full min-w-0 max-w-full bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                    />
+                  </label>
+
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Category</p>
+                    <div className="mt-2 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain pb-1">
+                      <div className="flex w-max min-w-full gap-2 pr-1" aria-label="Filter menu availability by category">
+                        <button
+                          type="button"
+                          aria-pressed={selectedCategoryId === null}
+                          onClick={() => setSelectedCategoryId(null)}
+                          className={`pressable min-h-10 shrink-0 rounded-full px-4 text-sm font-black ${
+                            selectedCategoryId === null
+                              ? "bg-[rgb(var(--color-primary))] text-white shadow-[0_10px_22px_rgb(var(--color-primary)/0.2)]"
+                              : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {categories.map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            aria-pressed={selectedCategoryId === category.id}
+                            onClick={() => setSelectedCategoryId(category.id)}
+                            className={`pressable min-h-10 shrink-0 rounded-full px-4 text-sm font-black ${
+                              selectedCategoryId === category.id
+                                ? "bg-[rgb(var(--color-primary))] text-white shadow-[0_10px_22px_rgb(var(--color-primary)/0.2)]"
+                                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            {category.name}
+                          </button>
+                        ))}
                       </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Availability</p>
+                    <div className="mt-2 grid w-full min-w-0 grid-cols-3 gap-2" aria-label="Filter menu availability by status">
+                      {(["all", "available", "sold_out"] as AvailabilityFilter[]).map((filter) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          aria-pressed={availabilityFilter === filter}
+                          onClick={() => setAvailabilityFilter(filter)}
+                          className={`pressable min-h-10 w-full min-w-0 rounded-button px-2 text-sm font-black sm:px-3 ${
+                            availabilityFilter === filter
+                              ? "bg-[rgb(var(--color-primary))] text-white shadow-[0_10px_22px_rgb(var(--color-primary)/0.2)]"
+                              : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {filter === "all" ? "All" : filter === "available" ? "Available" : "Sold out"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-100 py-3">
+                    <p className="text-sm font-semibold text-slate-500">
+                      {hasAvailabilityFilters
+                        ? `${formatMenuItemCount(menuAvailability.items.length, "matching")} · ${formatSoldOutCount(menuAvailability.completeSoldOutCount, true)}`
+                        : `${formatMenuItemCount(menuAvailability.completeItemCount)} · ${formatSoldOutCount(menuAvailability.completeSoldOutCount)}`}
+                    </p>
+                    {hasAvailabilityFilters ? (
                       <button
                         type="button"
-                        onClick={async () => {
-                          await runAdminAction(`item-${item.id}`, async () => {
-                            await toggleItemAvailabilityAction(item.id, item.isAvailable);
-                            await refreshAll();
-                          }, "Availability updated.");
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedCategoryId(null);
+                          setAvailabilityFilter("all");
                         }}
-                        disabled={busyAction !== null}
-                        className={`pressable min-h-10 shrink-0 rounded-full px-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60 ${
-                          item.isAvailable
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-rose-100 text-rose-700"
-                        }`}
+                        className="pressable min-h-10 rounded-button border border-slate-200 bg-white px-3 text-sm font-black text-slate-600 hover:bg-slate-50"
                       >
-                        {busyAction === `item-${item.id}` ? "Updating..." : item.isAvailable ? "Available" : "Sold out"}
+                        Clear filters
                       </button>
+                    ) : null}
+                  </div>
+
+                  {menuAvailability.completeItemCount === 0 ? (
+                    <EmptyState>No menu items are available yet.</EmptyState>
+                  ) : selectedCategoryId !== null && menuAvailability.selectedCategoryItemCount === 0 ? (
+                    <EmptyState>No items are in this category yet.</EmptyState>
+                  ) : availabilityFilter !== "all" && menuAvailability.postAvailabilityCount === 0 ? (
+                    <EmptyState>
+                      {availabilityFilter === "available"
+                        ? selectedCategoryId === null ? "No available items." : "No available items in this category."
+                        : selectedCategoryId === null ? "No sold-out items." : "No sold-out items in this category."}
+                    </EmptyState>
+                  ) : menuAvailability.items.length === 0 ? (
+                    <EmptyState>
+                      {menuAvailability.normalizedSearchQuery.length > 0 && selectedCategoryId === null && availabilityFilter === "all"
+                        ? `No items match “${menuAvailability.normalizedSearchQuery}”.`
+                        : "No items match these filters."}
+                    </EmptyState>
+                  ) : (
+                    <div className="min-w-0 max-h-[560px] max-w-full space-y-3 overflow-y-auto overscroll-contain pr-1">
+                      {menuAvailability.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex min-w-0 max-w-full items-center justify-between gap-4 rounded-[18px] border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-black text-slate-950">{item.name}</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">{currency(item.price)}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await runAdminAction(`item-${item.id}`, async () => {
+                                await toggleItemAvailabilityAction(item.id, item.isAvailable);
+                                await refreshAll();
+                              }, "Availability updated.");
+                            }}
+                            disabled={busyAction !== null}
+                            className={`pressable min-h-10 shrink-0 rounded-full px-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60 ${
+                              item.isAvailable
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {busyAction === `item-${item.id}` ? "Updating..." : item.isAvailable ? "Available" : "Sold out"}
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </Panel>
             </section>
@@ -550,6 +683,14 @@ function sortTablesForAdmin<T extends { number: string; label: string }>(tables:
 
 function getTableNumericOrder(table: { number: string; label: string }) {
   return extractFirstNumber(table.number) ?? extractFirstNumber(table.label);
+}
+
+function formatMenuItemCount(count: number, modifier?: "matching") {
+  return `${count} ${modifier ? `${modifier} ` : ""}item${count === 1 ? "" : "s"}`;
+}
+
+function formatSoldOutCount(count: number, includeTotal = false) {
+  return `${count} sold out${includeTotal ? " total" : ""}`;
 }
 
 function extractFirstNumber(value: string) {
