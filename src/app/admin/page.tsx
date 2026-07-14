@@ -1,4 +1,5 @@
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { AppShell } from "@/components/shared/app-shell";
 import { loadAdminReportAction } from "@/actions/admin-actions";
 import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -32,5 +33,17 @@ export default async function Page() {
     loadAdminReportAction("today")
   ]);
 
-  return <AdminDashboard initialSnapshot={snapshot} initialReportResult={initialReportResult} />;
+  return (
+    <AppShell
+      logoClickable
+      logoHref="/admin"
+      logoAriaLabel="Go to Admin dashboard"
+      navigationLinks={[
+        { label: "View Menu", href: "/menu" },
+        { label: "Kitchen", href: "/kitchen" }
+      ]}
+    >
+      <AdminDashboard initialSnapshot={snapshot} initialReportResult={initialReportResult} />
+    </AppShell>
+  );
 }

@@ -262,16 +262,20 @@ export function DailyReportingSection({
                 <div className="mt-5 min-h-[240px] flex-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={report.busyHours}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.28)" />
-                      <XAxis dataKey="label" stroke="#64748b" tickLine={false} axisLine={false} />
-                      <YAxis stroke="#64748b" tickLine={false} axisLine={false} allowDecimals={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--admin-report-chart-grid)" />
+                      <XAxis dataKey="label" stroke="var(--admin-report-chart-axis)" tickLine={false} axisLine={false} />
+                      <YAxis stroke="var(--admin-report-chart-axis)" tickLine={false} axisLine={false} allowDecimals={false} />
                       <Tooltip
-                        cursor={{ fill: "rgba(15,23,42,0.04)" }}
+                        cursor={{ fill: "var(--admin-report-chart-cursor)" }}
                         contentStyle={{
                           borderRadius: 16,
-                          border: "1px solid rgb(226,232,240)",
-                          boxShadow: "0 18px 50px rgba(15,23,42,0.12)"
+                          background: "var(--admin-report-tooltip-background)",
+                          border: "1px solid var(--admin-report-tooltip-border)",
+                          boxShadow: "0 18px 50px rgba(0,0,0,0.2)",
+                          color: "var(--admin-report-tooltip-text)"
                         }}
+                        labelStyle={{ color: "var(--admin-report-tooltip-text)" }}
+                        itemStyle={{ color: "var(--admin-report-tooltip-muted)" }}
                       />
                       <Bar dataKey="orders" fill={restaurantConfig.theme.colors.primary} radius={[10, 10, 0, 0]} />
                     </BarChart>
@@ -360,7 +364,7 @@ export function DailyReportingSection({
                           </span>
                         </td>
                         <td className="pr-4 font-bold">{currency(order.subtotal)}</td>
-                        <td className="text-slate-500">{formatReportLocalDateTime(order.createdAt, report.bounds.timeZone)}</td>
+                        <td className="report-timestamp">{formatReportLocalDateTime(order.createdAt, report.bounds.timeZone)}</td>
                       </tr>
                     ))}
                   </tbody>

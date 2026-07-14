@@ -1,5 +1,6 @@
 import { LockKeyhole } from "lucide-react";
 import { signInAction } from "@/actions/admin-actions";
+import { AppShell } from "@/components/shared/app-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,13 @@ export default async function Page({
   const { error } = await searchParams;
 
   return (
-    <div className="light min-h-[calc(100vh-4rem)] bg-[#f5f7fb] px-4 py-12 text-slate-950">
+    <AppShell
+      navigationLinks={[
+        { label: "View Menu", href: "/menu" },
+        { label: "Kitchen", href: "/kitchen" }
+      ]}
+    >
+    <div className="admin-login-page min-h-[calc(100vh-4rem)] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-10rem)] max-w-5xl items-center gap-8 lg:grid-cols-[1fr_440px]">
         <section className="hidden lg:block">
           <span className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-white">
@@ -77,5 +84,6 @@ export default async function Page({
         </form>
       </div>
     </div>
+    </AppShell>
   );
 }

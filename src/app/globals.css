@@ -16,8 +16,8 @@
   --radius-card: 24px;
   --motion-duration: 250ms;
   --motion-easing: ease;
-  --background: #0e0e0e;
-  --foreground: #f7f0e8;
+  --background: rgb(var(--color-background));
+  --foreground: rgb(var(--color-foreground));
   --font-inter: Inter;
   --font-playfair: Georgia;
 }
@@ -126,4 +126,535 @@ select {
 
 .light .fine-divider {
   border-color: rgba(0, 0, 0, 0.075);
+}
+
+.admin-dashboard {
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  --admin-report-chart-axis: rgb(232 215 194 / 0.64);
+  --admin-report-chart-grid: rgb(255 209 102 / 0.14);
+  --admin-report-chart-cursor: rgb(255 255 255 / 0.06);
+  --admin-report-tooltip-background: rgb(28 24 21);
+  --admin-report-tooltip-border: rgb(255 209 102 / 0.18);
+  --admin-report-tooltip-text: rgb(var(--color-foreground));
+  --admin-report-tooltip-muted: rgb(232 215 194 / 0.72);
+}
+
+.admin-dashboard .bg-white {
+  background-color: rgb(var(--color-secondary) / 0.96);
+}
+
+.admin-dashboard .bg-slate-50 {
+  background-color: rgb(255 255 255 / 0.055);
+}
+
+.admin-dashboard .bg-slate-100,
+.admin-dashboard .bg-slate-200 {
+  background-color: rgb(255 255 255 / 0.09);
+}
+
+.admin-dashboard .text-slate-950 {
+  color: rgb(var(--color-foreground));
+}
+
+.admin-dashboard .text-slate-800,
+.admin-dashboard .text-slate-700 {
+  color: rgb(var(--color-foreground) / 0.8);
+}
+
+.admin-dashboard .text-slate-600 {
+  color: rgb(var(--color-foreground) / 0.68);
+}
+
+.admin-dashboard .text-slate-500 {
+  color: rgb(var(--color-foreground) / 0.56);
+}
+
+.admin-dashboard .text-slate-400 {
+  color: rgb(var(--color-foreground) / 0.46);
+}
+
+.admin-dashboard .border-slate-100,
+.admin-dashboard .border-slate-200,
+.admin-dashboard .border-slate-300,
+.admin-dashboard .ring-slate-200 {
+  border-color: rgb(255 255 255 / 0.1);
+  --tw-ring-color: rgb(255 255 255 / 0.1);
+}
+
+.admin-dashboard .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(255 255 255 / 0.08);
+}
+
+.admin-dashboard .hover\:bg-slate-50:hover,
+.admin-dashboard .hover\:bg-slate-100:hover {
+  background-color: rgb(255 255 255 / 0.09);
+}
+
+.admin-dashboard .bg-rose-50,
+.admin-dashboard .bg-rose-50\/50 {
+  background-color: rgb(244 63 94 / 0.12);
+}
+
+.admin-dashboard .bg-amber-50 {
+  background-color: rgb(245 158 11 / 0.12);
+}
+
+.admin-dashboard .bg-emerald-100 {
+  background-color: rgb(16 185 129 / 0.16);
+}
+
+.admin-dashboard .text-emerald-700 {
+  color: rgb(167 243 208);
+}
+
+.admin-dashboard .bg-amber-100 {
+  background-color: rgb(245 158 11 / 0.16);
+}
+
+.admin-dashboard .text-amber-700 {
+  color: rgb(253 230 138);
+}
+
+.admin-dashboard .bg-rose-100 {
+  background-color: rgb(244 63 94 / 0.16);
+}
+
+.admin-dashboard .text-rose-700 {
+  color: rgb(254 205 211);
+}
+
+.admin-dashboard .disabled\:bg-slate-100:disabled,
+.admin-dashboard .disabled\:bg-slate-200:disabled {
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.admin-dashboard .disabled\:text-slate-400:disabled {
+  color: rgb(var(--color-foreground) / 0.42);
+}
+
+.admin-dashboard .report-timestamp {
+  color: rgb(232 215 194 / 0.72);
+}
+
+.light .admin-dashboard {
+  background: #f7f0e8;
+  color: #171717;
+  --admin-report-chart-axis: rgb(87 71 56);
+  --admin-report-chart-grid: rgb(120 91 63 / 0.24);
+  --admin-report-chart-cursor: rgb(23 23 23 / 0.04);
+  --admin-report-tooltip-background: rgb(255 252 247);
+  --admin-report-tooltip-border: rgb(215 198 178);
+  --admin-report-tooltip-text: rgb(23 23 23);
+  --admin-report-tooltip-muted: rgb(87 71 56);
+}
+
+.light .admin-dashboard .bg-white {
+  background-color: rgb(255 252 247);
+}
+
+.light .admin-dashboard .bg-slate-50 {
+  background-color: rgb(250 246 240);
+}
+
+.light .admin-dashboard .bg-slate-100 {
+  background-color: rgb(242 234 224);
+}
+
+.light .admin-dashboard .bg-slate-200 {
+  background-color: rgb(229 216 201);
+}
+
+.light .admin-dashboard .text-slate-950 {
+  color: rgb(23 23 23);
+}
+
+.light .admin-dashboard .text-slate-800 {
+  color: rgb(52 44 36);
+}
+
+.light .admin-dashboard .text-slate-700 {
+  color: rgb(72 60 49);
+}
+
+.light .admin-dashboard .text-slate-600 {
+  color: rgb(93 77 63);
+}
+
+.light .admin-dashboard .text-slate-500 {
+  color: rgb(120 101 83);
+}
+
+.light .admin-dashboard .text-slate-400 {
+  color: rgb(151 130 109);
+}
+
+.light .admin-dashboard .border-slate-100 {
+  border-color: rgb(242 234 224);
+}
+
+.light .admin-dashboard .border-slate-200,
+.light .admin-dashboard .ring-slate-200 {
+  border-color: rgb(229 216 201);
+  --tw-ring-color: rgb(229 216 201);
+}
+
+.light .admin-dashboard .border-slate-300 {
+  border-color: rgb(215 198 178);
+}
+
+.light .admin-dashboard .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(242 234 224);
+}
+
+.light .admin-dashboard .hover\:bg-slate-50:hover {
+  background-color: rgb(250 246 240);
+}
+
+.light .admin-dashboard .hover\:bg-slate-100:hover {
+  background-color: rgb(242 234 224);
+}
+
+.light .admin-dashboard .bg-rose-50 {
+  background-color: rgb(255 241 242);
+}
+
+.light .admin-dashboard .bg-rose-50\/50 {
+  background-color: rgb(255 241 242 / 0.5);
+}
+
+.light .admin-dashboard .bg-amber-50 {
+  background-color: rgb(255 251 235);
+}
+
+.light .admin-dashboard .bg-emerald-100 {
+  background-color: rgb(209 250 229);
+}
+
+.light .admin-dashboard .text-emerald-700 {
+  color: rgb(4 120 87);
+}
+
+.light .admin-dashboard .bg-amber-100 {
+  background-color: rgb(254 243 199);
+}
+
+.light .admin-dashboard .text-amber-700 {
+  color: rgb(180 83 9);
+}
+
+.light .admin-dashboard .bg-rose-100 {
+  background-color: rgb(255 228 230);
+}
+
+.light .admin-dashboard .text-rose-700 {
+  color: rgb(190 24 93);
+}
+
+.light .admin-dashboard .disabled\:bg-slate-100:disabled {
+  background-color: rgb(242 234 224);
+}
+
+.light .admin-dashboard .disabled\:bg-slate-200:disabled {
+  background-color: rgb(229 216 201);
+}
+
+.light .admin-dashboard .disabled\:text-slate-400:disabled {
+  color: rgb(151 130 109);
+}
+
+.light .admin-dashboard .report-timestamp {
+  color: rgb(93 77 63);
+}
+
+.kitchen-dashboard,
+.admin-login-page {
+  background: rgb(20 17 15);
+  color: rgb(var(--color-foreground));
+}
+
+.kitchen-dashboard .bg-white,
+.kitchen-dashboard .bg-white\/70,
+.admin-login-page .bg-white {
+  background-color: rgb(31 27 24 / 0.96);
+}
+
+.kitchen-dashboard .bg-slate-50,
+.admin-login-page .bg-slate-50 {
+  background-color: rgb(255 255 255 / 0.055);
+}
+
+.kitchen-dashboard .bg-slate-100,
+.kitchen-dashboard .bg-slate-100\/70,
+.kitchen-dashboard .bg-slate-200 {
+  background-color: rgb(255 255 255 / 0.09);
+}
+
+.kitchen-dashboard .text-slate-950,
+.kitchen-dashboard .text-slate-800,
+.kitchen-dashboard .text-slate-700,
+.admin-login-page .text-slate-950,
+.admin-login-page .text-slate-700 {
+  color: rgb(var(--color-foreground));
+}
+
+.kitchen-dashboard .text-slate-600 {
+  color: rgb(232 215 194 / 0.78);
+}
+
+.kitchen-dashboard .text-slate-500,
+.admin-login-page .text-slate-500 {
+  color: rgb(232 215 194 / 0.65);
+}
+
+.kitchen-dashboard .text-slate-400,
+.kitchen-dashboard .text-slate-300,
+.admin-login-page .text-slate-400 {
+  color: rgb(232 215 194 / 0.48);
+}
+
+.kitchen-dashboard .border-slate-200,
+.kitchen-dashboard .border-slate-300,
+.kitchen-dashboard .ring-slate-200,
+.admin-login-page .border-slate-200 {
+  border-color: rgb(255 209 102 / 0.14);
+  --tw-ring-color: rgb(255 209 102 / 0.14);
+}
+
+.kitchen-dashboard .hover\:bg-slate-50:hover {
+  background-color: rgb(255 255 255 / 0.09);
+}
+
+.kitchen-dashboard .focus\:bg-white:focus,
+.admin-login-page .focus\:bg-white:focus {
+  background-color: rgb(31 27 24 / 0.96);
+}
+
+.kitchen-dashboard .bg-amber-50,
+.kitchen-dashboard .bg-amber-50\/80,
+.kitchen-dashboard .bg-amber-100,
+.kitchen-dashboard .bg-amber-200 {
+  background-color: rgb(245 158 11 / 0.16);
+}
+
+.kitchen-dashboard .border-amber-200,
+.kitchen-dashboard .ring-amber-200 {
+  border-color: rgb(253 230 138 / 0.28);
+  --tw-ring-color: rgb(253 230 138 / 0.28);
+}
+
+.kitchen-dashboard .text-amber-700,
+.kitchen-dashboard .text-amber-800,
+.kitchen-dashboard .text-amber-900 {
+  color: rgb(254 243 199);
+}
+
+.kitchen-dashboard .bg-emerald-50 {
+  background-color: rgb(16 185 129 / 0.16);
+}
+
+.kitchen-dashboard .text-emerald-700 {
+  color: rgb(167 243 208);
+}
+
+.kitchen-dashboard .ring-emerald-200 {
+  --tw-ring-color: rgb(110 231 183 / 0.3);
+}
+
+.kitchen-dashboard .bg-sky-50 {
+  background-color: rgb(14 165 233 / 0.16);
+}
+
+.kitchen-dashboard .text-sky-700 {
+  color: rgb(186 230 253);
+}
+
+.kitchen-dashboard .ring-sky-200 {
+  --tw-ring-color: rgb(125 211 252 / 0.3);
+}
+
+.kitchen-dashboard .disabled\:bg-slate-200:disabled {
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.kitchen-dashboard .disabled\:text-slate-400:disabled {
+  color: rgb(232 215 194 / 0.42);
+}
+
+.admin-login-page .bg-rose-50 {
+  background-color: rgb(244 63 94 / 0.12);
+}
+
+.admin-login-page .border-rose-200 {
+  border-color: rgb(254 205 211 / 0.28);
+}
+
+.admin-login-page .text-rose-700 {
+  color: rgb(254 205 211);
+}
+
+.light .kitchen-dashboard,
+.light .admin-login-page {
+  background: #f7f0e8;
+  color: rgb(23 23 23);
+}
+
+.light .kitchen-dashboard .bg-white,
+.light .admin-login-page .bg-white {
+  background-color: rgb(255 252 247);
+}
+
+.light .kitchen-dashboard .bg-white\/70 {
+  background-color: rgb(255 252 247 / 0.7);
+}
+
+.light .kitchen-dashboard .bg-slate-50,
+.light .admin-login-page .bg-slate-50 {
+  background-color: rgb(250 246 240);
+}
+
+.light .kitchen-dashboard .bg-slate-100 {
+  background-color: rgb(242 234 224);
+}
+
+.light .kitchen-dashboard .bg-slate-100\/70 {
+  background-color: rgb(242 234 224 / 0.7);
+}
+
+.light .kitchen-dashboard .bg-slate-200 {
+  background-color: rgb(229 216 201);
+}
+
+.light .kitchen-dashboard .text-slate-950,
+.light .admin-login-page .text-slate-950 {
+  color: rgb(23 23 23);
+}
+
+.light .kitchen-dashboard .text-slate-800 {
+  color: rgb(52 44 36);
+}
+
+.light .kitchen-dashboard .text-slate-700,
+.light .admin-login-page .text-slate-700 {
+  color: rgb(72 60 49);
+}
+
+.light .kitchen-dashboard .text-slate-600 {
+  color: rgb(93 77 63);
+}
+
+.light .kitchen-dashboard .text-slate-500,
+.light .admin-login-page .text-slate-500 {
+  color: rgb(120 101 83);
+}
+
+.light .kitchen-dashboard .text-slate-400,
+.light .admin-login-page .text-slate-400 {
+  color: rgb(151 130 109);
+}
+
+.light .kitchen-dashboard .text-slate-300 {
+  color: rgb(181 163 143);
+}
+
+.light .kitchen-dashboard .border-slate-200,
+.light .admin-login-page .border-slate-200 {
+  border-color: rgb(229 216 201);
+}
+
+.light .kitchen-dashboard .border-slate-300 {
+  border-color: rgb(215 198 178);
+}
+
+.light .kitchen-dashboard .ring-slate-200 {
+  --tw-ring-color: rgb(229 216 201);
+}
+
+.light .kitchen-dashboard .hover\:bg-slate-50:hover {
+  background-color: rgb(250 246 240);
+}
+
+.light .kitchen-dashboard .focus\:bg-white:focus,
+.light .admin-login-page .focus\:bg-white:focus {
+  background-color: rgb(255 252 247);
+}
+
+.light .kitchen-dashboard .bg-emerald-50 {
+  background-color: rgb(236 253 245);
+}
+
+.light .kitchen-dashboard .text-emerald-700 {
+  color: rgb(4 120 87);
+}
+
+.light .kitchen-dashboard .ring-emerald-200 {
+  --tw-ring-color: rgb(167 243 208);
+}
+
+.light .kitchen-dashboard .bg-amber-50 {
+  background-color: rgb(255 251 235);
+}
+
+.light .kitchen-dashboard .bg-amber-50\/80 {
+  background-color: rgb(255 251 235 / 0.8);
+}
+
+.light .kitchen-dashboard .bg-amber-100 {
+  background-color: rgb(254 243 199);
+}
+
+.light .kitchen-dashboard .bg-amber-200 {
+  background-color: rgb(253 230 138);
+}
+
+.light .kitchen-dashboard .border-amber-200 {
+  border-color: rgb(253 230 138);
+}
+
+.light .kitchen-dashboard .ring-amber-200 {
+  --tw-ring-color: rgb(253 230 138);
+}
+
+.light .kitchen-dashboard .text-amber-700 {
+  color: rgb(180 83 9);
+}
+
+.light .kitchen-dashboard .text-amber-800 {
+  color: rgb(146 64 14);
+}
+
+.light .kitchen-dashboard .text-amber-900 {
+  color: rgb(120 53 15);
+}
+
+.light .kitchen-dashboard .bg-sky-50 {
+  background-color: rgb(240 249 255);
+}
+
+.light .kitchen-dashboard .text-sky-700 {
+  color: rgb(3 105 161);
+}
+
+.light .kitchen-dashboard .ring-sky-200 {
+  --tw-ring-color: rgb(186 230 253);
+}
+
+.light .kitchen-dashboard .disabled\:bg-slate-200:disabled {
+  background-color: rgb(229 216 201);
+}
+
+.light .kitchen-dashboard .disabled\:text-slate-400:disabled {
+  color: rgb(151 130 109);
+}
+
+.light .admin-login-page .bg-rose-50 {
+  background-color: rgb(255 241 242);
+}
+
+.light .admin-login-page .border-rose-200 {
+  border-color: rgb(254 205 211);
+}
+
+.light .admin-login-page .text-rose-700 {
+  color: rgb(190 24 93);
 }

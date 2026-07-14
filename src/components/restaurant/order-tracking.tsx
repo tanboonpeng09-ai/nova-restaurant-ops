@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { CheckCircle2, Circle, Clock3 } from "lucide-react";
+import { AppShell } from "@/components/shared/app-shell";
 import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
+import { buildTableMenuUrl, normalizeTableNumber } from "@/lib/table-resolution";
 import { currency } from "@/lib/utils";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
 import type { Order, OrderStatus } from "@/types";
@@ -35,19 +37,27 @@ export function OrderTracking({
 
   if (!currentOrder) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20">
-        <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-8 text-center shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/84">
-          <h1 className="text-3xl font-semibold tracking-tight text-white light:text-black">Order not found</h1>
-          <Link
-            href="/menu"
-            className="pressable mt-6 inline-flex rounded-button bg-ember px-5 py-3 font-semibold text-white"
-          >
-            Back to menu
-          </Link>
+      <AppShell>
+        <div className="mx-auto max-w-2xl px-4 py-20">
+          <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-8 text-center shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/84">
+            <h1 className="text-3xl font-semibold tracking-tight text-white light:text-black">Order not found</h1>
+            <Link
+              href="/menu"
+              className="pressable mt-6 inline-flex rounded-button bg-ember px-5 py-3 font-semibold text-white"
+            >
+              Back to menu
+            </Link>
+          </div>
         </div>
-      </div>
+      </AppShell>
     );
   }
+
+  const tableNumber = normalizeTableNumber(currentOrder.tableNumber);
+  const tableMenuUrl = tableNumber
+    ? new URL(buildTableMenuUrl("https://nova-steakhouse.local", tableNumber))
+    : null;
+  const menuHref = tableMenuUrl ? `${tableMenuUrl.pathname}${tableMenuUrl.search}` : undefined;
 
   const current = steps.indexOf(currentOrder.status);
   const currentStatusLabel =
@@ -68,6 +78,12 @@ export function OrderTracking({
           : "Your order is ready.";
 
   return (
+    <AppShell
+      logoClickable={Boolean(menuHref)}
+      logoHref={menuHref}
+      logoAriaLabel="Go to NOVA menu"
+      navigationLinks={menuHref ? [{ label: "Back to Menu", href: menuHref }] : []}
+    >
     <div className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
       <div className="rounded-card border border-white/[0.08] bg-white/[0.05] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.2)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/88 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)] sm:p-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
@@ -142,5 +158,6 @@ export function OrderTracking({
         </div>
       </div>
     </div>
+    </AppShell>
   );
 }

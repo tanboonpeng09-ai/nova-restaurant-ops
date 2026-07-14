@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 import "./globals.css";
-import { AppShell } from "@/components/shared/app-shell";
 import { restaurantConfig } from "@/config/restaurant";
 
 export const metadata: Metadata = {
@@ -19,7 +19,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning style={themeStyle()}>
       <body className="font-sans antialiased">
-        <AppShell>{children}</AppShell>
+        {children}
+        <Toaster
+          richColors
+          position="top-right"
+          mobileOffset={{
+            top: 16,
+            bottom: "calc(6.75rem + env(safe-area-inset-bottom))"
+          }}
+        />
       </body>
     </html>
   );
@@ -40,9 +48,7 @@ function themeStyle(): React.CSSProperties {
     "--radius-button": radius.button,
     "--radius-card": radius.card,
     "--motion-duration": motion.duration,
-    "--motion-easing": motion.easing,
-    "--background": colors.background,
-    "--foreground": colors.foreground
+    "--motion-easing": motion.easing
   } as React.CSSProperties;
 }
 

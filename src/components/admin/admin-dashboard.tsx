@@ -300,7 +300,7 @@ export function AdminDashboard({
   }
 
   return (
-    <div className="light min-h-[calc(100vh-4rem)] bg-[#f5f7fb] text-slate-950">
+    <div className="admin-dashboard min-h-[calc(100vh-4rem)]">
       <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <header className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.07)] lg:p-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">

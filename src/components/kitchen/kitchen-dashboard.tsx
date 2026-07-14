@@ -16,6 +16,7 @@ import {
   WifiOff
 } from "lucide-react";
 import { toast } from "sonner";
+import { AppShell } from "@/components/shared/app-shell";
 import {
   advanceOrderStatusAction,
   resolveStaffRequestAction,
@@ -250,7 +251,8 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     const kitchenAccess = restaurantConfig.kitchenAccess;
 
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-[#f6f8fb] px-4 py-12 text-slate-950">
+      <AppShell>
+      <div className="kitchen-dashboard min-h-[calc(100vh-4rem)] px-4 py-12">
         <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-lg items-center">
           <div className="w-full rounded-[24px] border border-slate-200 bg-white p-7 shadow-[0_18px_54px_rgba(15,23,42,0.08)] sm:p-8">
             <div className="grid size-14 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_14px_36px_rgba(15,23,42,0.18)]">
@@ -284,11 +286,13 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
           </div>
         </div>
       </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f8fb] px-4 py-5 text-slate-950 sm:px-6 lg:py-6">
+    <AppShell logoClickable logoHref="/kitchen" logoAriaLabel="Go to Kitchen board" showFullscreenButton>
+    <div className="kitchen-dashboard min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:py-6">
       <div className="mx-auto max-w-[1500px]">
         <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
@@ -517,5 +521,6 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
         </div>
       </div>
     </div>
+    </AppShell>
   );
 }
