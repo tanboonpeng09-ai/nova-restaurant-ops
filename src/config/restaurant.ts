@@ -43,35 +43,35 @@ export const restaurantConfig: RestaurantConfig = {
     showKitchenLink: true,
     showAdminLink: true,
     showTryDemoButton: true,
-    menuLabel: "Menu",
-    kitchenLabel: "Kitchen",
-    adminLabel: "Admin",
+    menuLabel: "Customer Menu",
+    kitchenLabel: "Kitchen Board",
+    adminLabel: "Owner Dashboard",
     tryDemoLabel: "Try Demo"
   },
   home: {
-    headline: "Premium American Grill, Powered by Modern Restaurant Operations",
+    headline: "Premium Dining, Powered by Smarter Operations",
     description:
-      "QR ordering, kitchen visibility, and owner controls in one calm operating system. Built to help premium dining rooms move faster without feeling rushed.",
+      "Explore a refined, table-aware ordering and operations flow designed for modern steakhouses.",
     primaryCtaLabel: "Try Customer Demo",
-    secondaryCtaLabel: "View Admin System",
+    secondaryCtaLabel: "View Operations Demo",
     proofPoints: ["Table-aware QR menus", "Realtime kitchen workflow", "Owner-ready operations"],
-    previewEyebrow: "Live floor preview",
-    previewServiceLabel: "Dinner service in progress",
-    previewStatusLabel: "Online",
+    previewEyebrow: "DEMO OPERATIONS PREVIEW",
+    previewServiceLabel: "Illustrative dinner-service snapshot",
+    previewStatusLabel: "SAMPLE DATA",
     previewMetrics: [
-      { label: "Orders Today", value: "42", detail: "+18% vs last week" },
-      { label: "Kitchen Live", value: "06", detail: "active tickets" },
-      { label: "Average Prep Time", value: "12m", detail: "current service" }
+      { label: "SAMPLE TICKETS", value: "42", detail: "illustrative volume" },
+      { label: "ACTIVE DEMO ORDERS", value: "06", detail: "illustrative kitchen load" },
+      { label: "TARGET PREP", value: "12m", detail: "example service pace" }
     ],
-    queueTitle: "Kitchen queue",
-    queueDescription: "New orders move from scan to station without refresh.",
+    queueTitle: "Sample kitchen queue",
+    queueDescription: "Illustrative tickets showing a typical dinner-service flow.",
     queueRows: [
       { table: "Table 04", status: "Preparing", items: "6 items" },
       { table: "Table 09", status: "Ready", items: "2 items" },
       { table: "Table 12", status: "New", items: "4 items" }
     ],
-    averageTicketLabel: "Average ticket value",
-    averageTicketDescription: "Tracked as order value, not revenue.",
+    averageTicketLabel: "Sample ticket value",
+    averageTicketDescription: "Illustrative value for preview purposes.",
     averageTicketValue: "$48.20",
     operationsEyebrow: "Restaurant operations",
     operationsTitle: "A complete service flow, presented simply.",
@@ -97,7 +97,7 @@ export const restaurantConfig: RestaurantConfig = {
         href: "/admin"
       }
     ],
-    featureCtaLabel: "Open view"
+    featureCtaLabel: "Open customer menu"
   },
   kitchenAccess: {
     eyebrow: "Kitchen Display",

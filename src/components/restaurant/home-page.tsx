@@ -34,13 +34,13 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-saffron">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#D99A4E] light:text-[#A8521F]">
               {settings.name}
             </p>
             <h1 className="mt-6 max-w-4xl text-[3.55rem] font-semibold leading-[0.96] tracking-[-0.02em] text-white light:text-black sm:text-[4.15rem] lg:text-[4.2rem] xl:text-[4.65rem]">
               {homeConfig.headline}
             </h1>
-            <p className="mt-7 max-w-2xl text-base leading-8 text-white/66 light:text-black/64 sm:text-lg">
+            <p className="mt-7 max-w-2xl text-base leading-8 text-white/66 light:text-black/65 sm:text-lg">
               {homeConfig.description}
             </p>
 
@@ -53,13 +53,13 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
               </Link>
               <Link
                 href="/admin"
-                className="pressable inline-flex min-h-14 items-center justify-center gap-2 rounded-button border border-white/[0.13] bg-white/[0.035] px-7 py-4 font-semibold text-white hover:border-white/20 hover:bg-white/[0.07] light:border-black/[0.08] light:bg-white/58 light:text-black light:hover:bg-white"
+                className="pressable inline-flex min-h-14 items-center justify-center gap-2 rounded-button border border-white/[0.13] bg-white/[0.035] px-7 py-4 font-semibold text-white hover:border-white/20 hover:bg-white/[0.07] light:border-black/[0.08] light:bg-white/60 light:text-black light:hover:bg-white"
               >
                 {homeConfig.secondaryCtaLabel}
               </Link>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-white/45 light:text-black/46">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-white/45 light:text-black/65">
               {homeConfig.proofPoints.map((proofPoint, index) => (
                 <span key={proofPoint} className="contents">
                   {index > 0 && (
@@ -72,38 +72,57 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
           </motion.div>
 
           <motion.div
-            className="rounded-card border border-white/[0.09] bg-white/[0.045] p-2.5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/68 light:shadow-[0_24px_70px_rgba(40,28,18,0.12)]"
+            className="rounded-card border border-white/[0.09] bg-white/[0.045] p-2.5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/70 light:shadow-[0_24px_70px_rgba(40,28,18,0.12)]"
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.12, duration: 0.55, ease: "easeOut" }}
           >
             <div className="overflow-hidden rounded-[20px] border border-white/[0.08] bg-coal/88 light:border-black/[0.07] light:bg-white">
-              <div className="relative h-56 sm:h-64">
+              <div className="relative aspect-video sm:h-64 sm:aspect-auto">
                 <div
-                  className="absolute inset-0 bg-cover bg-center"
+                  className="absolute inset-0 bg-contain bg-center bg-no-repeat sm:bg-cover"
                   style={{ backgroundImage: `url(${settings.heroImage})` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/34 to-black/10" />
-                <div className="absolute bottom-5 left-5 right-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-saffron">
+                <div className="absolute inset-0 hidden bg-gradient-to-t from-black/86 via-black/34 to-black/10 sm:block" />
+                <div className="absolute bottom-5 left-5 right-5 hidden sm:block">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D99A4E] light:text-[#A8521F] sm:tracking-[0.24em]">
                     {homeConfig.previewEyebrow}
                   </p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
+                  <div className="mt-3 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                       <p className="text-2xl font-semibold text-white">
-                        {restaurantConfig.demo.tableCount} tables
+                        {restaurantConfig.demo.tableCount} demo tables
                       </p>
                       <p className="mt-1 text-sm text-white/62">{homeConfig.previewServiceLabel}</p>
                     </div>
-                    <span className="rounded-full bg-emerald-400/[0.14] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100 ring-1 ring-emerald-300/20">
+                    <span className="rounded-full bg-[#2B211A] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#D99A4E] ring-1 ring-[#6E4A29] light:bg-[#F5E2C8] light:text-[#A8521F] light:ring-[#A8521F]">
                       {homeConfig.previewStatusLabel}
                     </span>
                   </div>
                 </div>
               </div>
 
-                <div className="p-5 sm:p-6">
-                  <div className="grid gap-3 sm:grid-cols-3">
+              <div className="border-b border-white/[0.08] px-5 py-4 light:border-black/[0.07] sm:hidden">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D99A4E] light:text-[#A8521F] sm:tracking-[0.24em]">
+                  {homeConfig.previewEyebrow}
+                </p>
+                <div className="mt-3 flex flex-col items-start gap-2.5">
+                  <div>
+                    <p className="text-2xl font-semibold text-white light:text-black">
+                      {restaurantConfig.demo.tableCount} demo tables
+                    </p>
+                    <p className="mt-1 text-sm text-white/62 light:text-black/65">
+                      {homeConfig.previewServiceLabel}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-[#2B211A] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#D99A4E] ring-1 ring-[#6E4A29] light:bg-[#F5E2C8] light:text-[#A8521F] light:ring-[#A8521F]">
+                    {homeConfig.previewStatusLabel}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-5 sm:p-6">
+                <div className="grid gap-3 sm:grid-cols-3">
                   {homeConfig.previewMetrics.map((metric) => (
                     <div
                       key={metric.label}
@@ -115,7 +134,7 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
                       <p className="mt-3 text-2xl font-semibold tracking-tight text-white light:text-black">
                         {metric.value}
                       </p>
-                      <p className="mt-1 text-xs text-white/46 light:text-black/48">{metric.detail}</p>
+                      <p className="mt-1 text-xs text-white/46 light:text-black/65">{metric.detail}</p>
                     </div>
                   ))}
                 </div>
@@ -124,7 +143,7 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-semibold text-white light:text-black">{homeConfig.queueTitle}</p>
-                      <p className="mt-1 text-xs text-white/46 light:text-black/48">
+                      <p className="mt-1 text-xs text-white/46 light:text-black/65">
                         {homeConfig.queueDescription}
                       </p>
                     </div>
@@ -134,10 +153,10 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
                     {homeConfig.queueRows.map(({ table, status, items }) => (
                       <div
                         key={table}
-                        className="flex items-center justify-between rounded-xl bg-white/[0.045] px-3 py-2 text-sm light:bg-white/72"
+                        className="flex items-center justify-between rounded-xl bg-white/[0.045] px-3 py-2 text-sm light:bg-white/70"
                       >
                         <span className="font-medium text-white light:text-black">{table}</span>
-                        <span className="text-white/48 light:text-black/48">{items}</span>
+                        <span className="text-white/48 light:text-black/65">{items}</span>
                         <span className="rounded-full bg-ember/10 px-2.5 py-1 text-xs font-semibold text-ember">
                           {status}
                         </span>
@@ -149,7 +168,7 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
                 <div className="mt-4 flex items-center justify-between rounded-2xl border border-ember/15 bg-ember/[0.06] px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold text-white light:text-black">{homeConfig.averageTicketLabel}</p>
-                    <p className="mt-1 text-xs text-white/48 light:text-black/48">
+                    <p className="mt-1 text-xs text-white/48 light:text-black/65">
                       {homeConfig.averageTicketDescription}
                     </p>
                   </div>
@@ -175,7 +194,7 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
             <Link
               href={step.href}
               key={step.label}
-              className="interactive-card group rounded-card border border-white/[0.08] bg-white/[0.045] p-6 shadow-[0_18px_54px_rgba(0,0,0,0.18)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/72 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]"
+              className="interactive-card group rounded-card border border-white/[0.08] bg-white/[0.045] p-6 shadow-[0_18px_54px_rgba(0,0,0,0.18)] backdrop-blur-xl light:border-black/[0.07] light:bg-white/70 light:shadow-[0_18px_48px_rgba(40,28,18,0.1)]"
             >
               <span className="grid size-12 place-items-center rounded-button bg-ember/10 text-ember ring-1 ring-ember/15">
                 <Icon size={22} />
@@ -183,9 +202,13 @@ export function HomePage({ settings }: { settings: RestaurantSettings }) {
               <h3 className="mt-6 text-[22px] font-semibold tracking-tight text-white light:text-black">
                 {step.label}
               </h3>
-              <p className="mt-3 max-w-sm text-sm leading-6 text-white/55 light:text-black/56">{step.detail}</p>
-              <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/64 group-hover:text-ember light:text-black/56">
-                {homeConfig.featureCtaLabel} <ArrowRight size={15} />
+              <p className="mt-3 max-w-sm text-sm leading-6 text-white/55 light:text-black/65">{step.detail}</p>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/64 group-hover:text-ember light:text-black/65">
+                {step.icon === "qr"
+                  ? homeConfig.featureCtaLabel
+                  : step.icon === "chef"
+                    ? "Open kitchen board"
+                    : "Open owner dashboard"} <ArrowRight size={15} />
               </span>
             </Link>
             );
