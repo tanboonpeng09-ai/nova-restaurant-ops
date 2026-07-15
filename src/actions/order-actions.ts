@@ -6,11 +6,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { buildCartFingerprint, generateOrderNumberCandidate } from "@/lib/reliability";
+import { requireKitchenSession } from "@/lib/server/kitchen-session";
 import { validateActiveTable, type TableValidationClient } from "@/lib/server/table-validation";
 import type { CartItem, OrderStatus, StaffRequestType, TableStatus } from "@/types";
 
 const statusFlow: OrderStatus[] = ["new", "preparing", "ready", "completed"];
 const duplicateWindowMs = 8_000;
+const kitchenSessionRequiredResult = {
+  ok: false,
+  code: "KITCHEN_SESSION_REQUIRED",
+  error: "Kitchen access expired. Enter the PIN to unlock again."
+} as const;
+
+export type KitchenMutationResult =
+  | { ok: true }
+  | typeof kitchenSessionRequiredResult;
+
+type MutationClient = Pick<ReturnType<typeof createAdminClient>, "from">;
 
 type AvailableMenuItemRow = {
   id: string;
@@ -179,11 +191,6 @@ export async function createStaffRequestAction({
   return data.id as string;
 }
 
-export async function verifyKitchenPinAction(pin: string) {
-  await assertKitchenPin(pin);
-  return true;
-}
-
 async function insertOrderWithRetry({
   tableNumber,
   notes,
@@ -268,22 +275,13 @@ function isUniqueViolation(error: unknown) {
 
 export async function updateOrderStatusAction({
   orderId,
-  status,
-  kitchenPin
+  status
 }: {
   orderId: string;
   status: OrderStatus;
-  kitchenPin?: string;
 }) {
-  if (kitchenPin) await assertKitchenPin(kitchenPin);
-  const supabase = kitchenPin ? createAdminClient() : await createClient();
-
-  const { error } = await supabase
-    .from("orders")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", orderId);
-
-  if (error) throw error;
+  const supabase = await requireAdminMutationClient();
+  await updateOrderStatus(supabase, orderId, status);
 
   revalidatePath("/kitchen");
   revalidatePath("/admin");
@@ -291,26 +289,31 @@ export async function updateOrderStatusAction({
 
 export async function advanceOrderStatusAction({
   orderId,
-  currentStatus,
-  kitchenPin
+  currentStatus
 }: {
   orderId: string;
   currentStatus: OrderStatus;
-  kitchenPin?: string;
-}) {
+}): Promise<KitchenMutationResult> {
+  const authorizationFailure = await authorizeKitchenMutation();
+  if (authorizationFailure) return authorizationFailure;
+
   const nextStatus = statusFlow[Math.min(statusFlow.indexOf(currentStatus) + 1, statusFlow.length - 1)];
-  await updateOrderStatusAction({ orderId, status: nextStatus, kitchenPin });
+  await updateOrderStatus(createAdminClient(), orderId, nextStatus);
+
+  revalidatePath("/kitchen");
+  revalidatePath("/admin");
+  return { ok: true };
 }
 
 export async function resolveStaffRequestAction({
-  requestId,
-  kitchenPin
+  requestId
 }: {
   requestId: string;
-  kitchenPin?: string;
-}) {
-  if (kitchenPin) await assertKitchenPin(kitchenPin);
-  const supabase = kitchenPin ? createAdminClient() : await createClient();
+}): Promise<KitchenMutationResult> {
+  const authorizationFailure = await authorizeKitchenMutation();
+  if (authorizationFailure) return authorizationFailure;
+
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("staff_requests")
     .update({ status: "resolved", resolved_at: new Date().toISOString() })
@@ -320,19 +323,17 @@ export async function resolveStaffRequestAction({
 
   revalidatePath("/kitchen");
   revalidatePath("/admin");
+  return { ok: true };
 }
 
 export async function updateTableStatusAction({
   tableId,
-  status,
-  kitchenPin
+  status
 }: {
   tableId: string;
   status: TableStatus;
-  kitchenPin?: string;
 }) {
-  if (kitchenPin) await assertKitchenPin(kitchenPin);
-  const supabase = kitchenPin ? createAdminClient() : await requireAdminMutationClient();
+  const supabase = await requireAdminMutationClient();
   const { error } = await supabase.from("tables").update({ status }).eq("id", tableId);
 
   if (error) throw error;
@@ -362,16 +363,24 @@ async function requireAdminMutationClient() {
   return adminCheckClient;
 }
 
-async function assertKitchenPin(pin: string) {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("restaurant_settings")
-    .select("kitchen_pin")
-    .limit(1)
-    .single();
+async function authorizeKitchenMutation() {
+  try {
+    await requireKitchenSession();
+    return null;
+  } catch {
+    return kitchenSessionRequiredResult;
+  }
+}
+
+async function updateOrderStatus(
+  supabase: MutationClient,
+  orderId: string,
+  status: OrderStatus
+) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", orderId);
 
   if (error) throw error;
-  if (!data?.kitchen_pin || data.kitchen_pin !== pin) {
-    throw new Error("Invalid kitchen PIN.");
-  }
 }

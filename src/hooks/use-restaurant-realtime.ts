@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient as createRawSupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -10,13 +10,55 @@ import {
   fetchStaffRequests,
   fetchTables
 } from "@/services/browser-restaurant-service";
+import {
+  sanitizeKitchenClientSnapshot,
+  type KitchenClientSnapshot
+} from "@/lib/kitchen-client-snapshot";
 import type { RestaurantSnapshot } from "@/services/restaurant-service";
 
 type RefreshKind = "all" | "orders" | "requests" | "tables";
 
-export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
+type RealtimeSnapshotShape = Omit<RestaurantSnapshot, "settings"> & {
+  settings: object;
+};
+
+type BrowserRestaurantSnapshot = Awaited<ReturnType<typeof fetchBrowserSnapshot>>;
+
+type SnapshotMapper<TSnapshot extends RealtimeSnapshotShape> = (
+  snapshot: BrowserRestaurantSnapshot
+) => TSnapshot;
+
+type PartialSnapshotUpdates = {
+  orders: RestaurantSnapshot["orders"] | null;
+  staffRequests: RestaurantSnapshot["staffRequests"] | null;
+  tables: RestaurantSnapshot["tables"] | null;
+};
+
+export function mapIncomingRestaurantSnapshot<TSnapshot extends RealtimeSnapshotShape>(
+  snapshot: BrowserRestaurantSnapshot,
+  mapSnapshot: SnapshotMapper<TSnapshot>
+) {
+  return mapSnapshot(snapshot);
+}
+
+export function mergeRestaurantSnapshotUpdates<TSnapshot extends RealtimeSnapshotShape>(
+  current: TSnapshot,
+  updates: PartialSnapshotUpdates
+) {
+  return {
+    ...current,
+    ...(updates.orders ? { orders: updates.orders } : {}),
+    ...(updates.staffRequests ? { staffRequests: updates.staffRequests } : {}),
+    ...(updates.tables ? { tables: updates.tables } : {})
+  };
+}
+
+function useMappedRestaurantRealtime<TSnapshot extends RealtimeSnapshotShape>(
+  initialSnapshot: TSnapshot,
+  mapSnapshot: SnapshotMapper<TSnapshot>
+) {
   const router = useRouter();
-  const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [snapshot, setSnapshot] = useState<TSnapshot>(initialSnapshot);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(!isSupabaseConfigured());
@@ -48,7 +90,9 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
 
         if (pendingKinds.has("all")) {
           const nextSnapshot = await fetchBrowserSnapshot();
-          if (mountedRef.current) setSnapshot(nextSnapshot);
+          if (mountedRef.current) {
+            setSnapshot(mapIncomingRestaurantSnapshot(nextSnapshot, mapSnapshot));
+          }
           continue;
         }
 
@@ -59,14 +103,9 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
         ]);
 
         if (mountedRef.current) {
-          setSnapshot((current) => {
-            return {
-              ...current,
-              ...(orders ? { orders } : {}),
-              ...(staffRequests ? { staffRequests } : {}),
-              ...(tables ? { tables } : {})
-            };
-          });
+          setSnapshot((current) =>
+            mergeRestaurantSnapshotUpdates(current, { orders, staffRequests, tables })
+          );
         }
       }
 
@@ -87,7 +126,7 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
         }, 0);
       }
     }
-  }, [router]);
+  }, [mapSnapshot, router]);
 
   const runRefresh = useCallback(async (kind: RefreshKind) => {
     if (!isSupabaseConfigured()) return;
@@ -236,7 +275,6 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
 
   return {
     snapshot,
-    setSnapshot,
     isRefreshing,
     syncError,
     isRealtimeConnected,
@@ -245,4 +283,20 @@ export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
     refreshRequests,
     refreshTables
   };
+}
+
+export function useRestaurantRealtime(initialSnapshot: RestaurantSnapshot) {
+  const clientInitialSnapshot = useMemo(
+    () => sanitizeKitchenClientSnapshot(initialSnapshot),
+    [initialSnapshot]
+  );
+
+  return useMappedRestaurantRealtime(
+    clientInitialSnapshot,
+    sanitizeKitchenClientSnapshot
+  );
+}
+
+export function useKitchenRestaurantRealtime(initialSnapshot: KitchenClientSnapshot) {
+  return useMappedRestaurantRealtime(initialSnapshot, sanitizeKitchenClientSnapshot);
 }

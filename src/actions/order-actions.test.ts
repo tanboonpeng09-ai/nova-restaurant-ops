@@ -3,7 +3,12 @@ import type { CartItem } from "@/types";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/env", () => ({ isServiceRoleConfigured: () => false }));
+vi.mock("@/lib/server/kitchen-session", () => ({
+  KitchenSessionRequiredError: class KitchenSessionRequiredError extends Error {},
+  requireKitchenSession: vi.fn()
+}));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 

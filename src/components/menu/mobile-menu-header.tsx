@@ -5,7 +5,7 @@ export function MobileMenuHeader({
   settings,
   tableNumber
 }: {
-  settings: RestaurantSettings;
+  settings: Pick<RestaurantSettings, "name">;
   tableNumber: string;
 }) {
   return (

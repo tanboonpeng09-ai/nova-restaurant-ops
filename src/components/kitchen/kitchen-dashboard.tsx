@@ -16,18 +16,19 @@ import {
   WifiOff
 } from "lucide-react";
 import { toast } from "sonner";
+import { lockKitchenAction, unlockKitchenAction } from "@/actions/kitchen-actions";
 import { AppShell } from "@/components/shared/app-shell";
 import {
   advanceOrderStatusAction,
-  resolveStaffRequestAction,
-  verifyKitchenPinAction
+  resolveStaffRequestAction
 } from "@/actions/order-actions";
 import { restaurantConfig } from "@/config/restaurant";
-import { useRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
-import { isSupabaseConfigured } from "@/lib/env";
+import { useKitchenRestaurantRealtime } from "@/hooks/use-restaurant-realtime";
+import {
+  type KitchenClientSnapshot
+} from "@/lib/kitchen-client-snapshot";
 import { getGenuinelyNewOrderIds } from "@/lib/kitchen-order-alerts";
 import { currency, statusLabel } from "@/lib/utils";
-import type { RestaurantSnapshot } from "@/services/restaurant-service";
 import type { OrderStatus } from "@/types";
 
 const statusStyles: Record<OrderStatus, string> = {
@@ -110,10 +111,17 @@ function getAudioContextConstructor() {
   return window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 }
 
-export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: RestaurantSnapshot }) {
+export function KitchenDashboard({
+  initialSnapshot,
+  initiallyUnlocked
+}: {
+  initialSnapshot: KitchenClientSnapshot;
+  initiallyUnlocked: boolean;
+}) {
   const [pin, setPin] = useState("");
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(initiallyUnlocked);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isLocking, setIsLocking] = useState(false);
   const [alertsEnabled, setAlertsEnabled] = useState(false);
   const [isAlertActivationPending, setIsAlertActivationPending] = useState(false);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
@@ -129,8 +137,8 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     isRefreshing,
     syncError,
     isRealtimeConnected
-  } = useRestaurantRealtime(initialSnapshot);
-  const { settings, orders, staffRequests } = snapshot;
+  } = useKitchenRestaurantRealtime(initialSnapshot);
+  const { orders, staffRequests } = snapshot;
 
   const activeOrders = useMemo(
     () => orders.filter((order) => order.status !== "completed"),
@@ -145,6 +153,10 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     [activeOrders]
   );
   const openRequests = staffRequests.filter((request) => request.status === "open");
+
+  useEffect(() => {
+    setUnlocked(initiallyUnlocked);
+  }, [initiallyUnlocked]);
 
   useEffect(() => {
     if (unlocked && activeOrders[0]) {
@@ -188,19 +200,46 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
     if (!pin.trim() || isUnlocking) return;
     setIsUnlocking(true);
     try {
-      if (isSupabaseConfigured()) {
-        await verifyKitchenPinAction(pin.trim());
-      } else if (pin !== settings.kitchenPin) {
-        throw new Error("Invalid kitchen PIN.");
+      const result = await unlockKitchenAction(pin);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
       }
 
+      setPin("");
       setUnlocked(true);
       toast.success("Kitchen unlocked.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not unlock kitchen.");
+    } catch {
+      toast.error("Could not unlock kitchen.");
     } finally {
       setIsUnlocking(false);
     }
+  }
+
+  async function lockKitchen() {
+    if (isLocking) return;
+    setIsLocking(true);
+    try {
+      await lockKitchenAction();
+      setPin("");
+      setUnlocked(false);
+      toast.success("Kitchen locked.");
+    } catch {
+      toast.error("Could not lock kitchen.");
+    } finally {
+      setIsLocking(false);
+    }
+  }
+
+  function handleKitchenMutationFailure(result: { ok: boolean; code?: string; error?: string }) {
+    if (result.ok) return false;
+    if (result.code === "KITCHEN_SESSION_REQUIRED") {
+      setPin("");
+      setUnlocked(false);
+      toast.error(result.error ?? "Kitchen access expired. Enter the PIN to unlock again.");
+      return true;
+    }
+    return false;
   }
 
   async function toggleAudioAlerts() {
@@ -252,7 +291,7 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
 
     return (
       <AppShell>
-      <div className="kitchen-dashboard min-h-[calc(100vh-4rem)] px-4 py-12">
+        <div className="kitchen-dashboard min-h-[calc(100vh-4rem)] px-4 py-12">
         <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-lg items-center">
           <div className="w-full rounded-[24px] border border-slate-200 bg-white p-7 shadow-[0_18px_54px_rgba(15,23,42,0.08)] sm:p-8">
             <div className="grid size-14 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_14px_36px_rgba(15,23,42,0.18)]">
@@ -285,14 +324,14 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
             </button>
           </div>
         </div>
-      </div>
+        </div>
       </AppShell>
     );
   }
 
   return (
     <AppShell logoClickable logoHref="/kitchen" logoAriaLabel="Go to Kitchen board" showFullscreenButton>
-    <div className="kitchen-dashboard min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:py-6">
+      <div className="kitchen-dashboard min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:py-6">
       <div className="mx-auto max-w-[1500px]">
         <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
@@ -328,6 +367,15 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
               >
                 {alertsEnabled ? <Volume2 size={18} /> : <Bell size={18} />}
                 {isAlertActivationPending ? "Enabling..." : alertsEnabled ? "Alerts On" : "Enable Alerts"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void lockKitchen()}
+                disabled={isLocking}
+                className="pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-button border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              >
+                <LockKeyhole size={18} />
+                {isLocking ? "Locking..." : "Lock Kitchen"}
               </button>
               <span className="sr-only" aria-live="polite">
                 {alertsEnabled ? "Audio alerts are enabled." : "Audio alerts are disabled."}
@@ -375,7 +423,8 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
                       if (busyRequestId === request.id) return;
                       setBusyRequestId(request.id);
                       try {
-                        await resolveStaffRequestAction({ requestId: request.id, kitchenPin: pin });
+                        const result = await resolveStaffRequestAction({ requestId: request.id });
+                        if (handleKitchenMutationFailure(result)) return;
                         await refreshRequests();
                         toast.success("Request resolved.");
                       } catch (error) {
@@ -492,11 +541,11 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
                             if (busyOrderId === order.id) return;
                             setBusyOrderId(order.id);
                             try {
-                              await advanceOrderStatusAction({
+                              const result = await advanceOrderStatusAction({
                                 orderId: order.id,
-                                currentStatus: order.status,
-                                kitchenPin: pin
+                                currentStatus: order.status
                               });
+                              if (handleKitchenMutationFailure(result)) return;
                               await refreshOrders();
                               toast.success("Order status updated.");
                             } catch (error) {
@@ -520,7 +569,7 @@ export function KitchenDashboard({ initialSnapshot }: { initialSnapshot: Restaur
           ))}
         </div>
       </div>
-    </div>
+      </div>
     </AppShell>
   );
 }

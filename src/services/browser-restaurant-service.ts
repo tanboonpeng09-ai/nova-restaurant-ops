@@ -7,13 +7,20 @@ import {
   mapStaffRequest,
   mapTable
 } from "@/lib/supabase/mappers";
-import type { Category, MenuItem, Order, RestaurantSettings, StaffRequest, Table } from "@/types";
+import type { Category, MenuItem, Order, StaffRequest, Table } from "@/types";
+
+const browserRestaurantSettingsColumns =
+  "restaurant_name,tagline,description,phone,address,brand_color,hero_image_url,ordering_enabled,closed_message";
 
 export async function fetchBrowserSnapshot() {
   const supabase = createClient();
   const [settingsResult, categoriesResult, menuItemsResult, tablesResult, ordersResult, requestsResult] =
     await Promise.all([
-      supabase.from("restaurant_settings").select("*").limit(1).single(),
+      supabase
+        .from("restaurant_settings")
+        .select(browserRestaurantSettingsColumns)
+        .limit(1)
+        .single(),
       supabase
         .from("menu_categories")
         .select("*")
@@ -40,8 +47,11 @@ export async function fetchBrowserSnapshot() {
   if (ordersResult.error) throw ordersResult.error;
   if (requestsResult.error) throw requestsResult.error;
 
+  const { kitchenPin: omittedLegacyPin, ...settings } = mapSettings(settingsResult.data);
+  void omittedLegacyPin;
+
   return {
-    settings: mapSettings(settingsResult.data) as RestaurantSettings,
+    settings,
     categories: (categoriesResult.data ?? []).map(mapCategory) as Category[],
     menuItems: (menuItemsResult.data ?? []).map(mapMenuItem) as MenuItem[],
     tables: (tablesResult.data ?? []).map(mapTable) as Table[],
