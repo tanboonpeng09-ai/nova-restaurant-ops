@@ -9,6 +9,9 @@ import {
 } from "@/lib/supabase/mappers";
 import type { Category, MenuItem, Order, RestaurantSettings, StaffRequest, Table } from "@/types";
 
+const restaurantSettingsColumns =
+  "restaurant_name,tagline,description,phone,address,brand_color,hero_image_url,ordering_enabled,closed_message";
+
 export type RestaurantSnapshot = {
   settings: RestaurantSettings;
   categories: Category[];
@@ -23,7 +26,7 @@ export async function getRestaurantSnapshot(): Promise<RestaurantSnapshot> {
 
   const [settingsResult, categoriesResult, menuItemsResult, tablesResult, ordersResult, requestsResult] =
     await Promise.all([
-      supabase.from("restaurant_settings").select("*").limit(1).single(),
+      supabase.from("restaurant_settings").select(restaurantSettingsColumns).limit(1).single(),
       supabase
         .from("menu_categories")
         .select("*")
