@@ -102,8 +102,8 @@ export const restaurantConfig: RestaurantConfig = {
   kitchenAccess: {
     eyebrow: "Kitchen Display",
     title: "Kitchen access",
-    pinHelpText: "Enter the owner-generated kitchen PIN. Demo PIN: 123456.",
-    pinPlaceholder: "123456",
+    pinHelpText: "Enter your kitchen PIN to continue.",
+    pinPlaceholder: "Enter PIN",
     submitLabel: "Enter Kitchen",
     checkingLabel: "Checking..."
   },

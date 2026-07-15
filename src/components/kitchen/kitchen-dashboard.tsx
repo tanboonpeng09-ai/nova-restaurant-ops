@@ -7,6 +7,8 @@ import {
   ChefHat,
   CheckCircle2,
   Clock3,
+  Eye,
+  EyeOff,
   Flame,
   LockKeyhole,
   ReceiptText,
@@ -119,6 +121,7 @@ export function KitchenDashboard({
   initiallyUnlocked: boolean;
 }) {
   const [pin, setPin] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [unlocked, setUnlocked] = useState(initiallyUnlocked);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
@@ -304,16 +307,28 @@ export function KitchenDashboard({
             <p className="mt-3 leading-7 text-slate-500">
               {kitchenAccess.pinHelpText}
             </p>
-            <input
-              value={pin}
-              onChange={(event) => setPin(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void unlockKitchen();
-              }}
-              className="mt-6 h-14 w-full rounded-button border border-slate-200 bg-slate-50 px-4 text-lg font-bold tracking-[0.28em] text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-              placeholder={kitchenAccess.pinPlaceholder}
-              aria-label="Kitchen PIN"
-            />
+            <div className="relative mt-6">
+              <input
+                type={showPin ? "text" : "password"}
+                inputMode="numeric"
+                value={pin}
+                onChange={(event) => setPin(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void unlockKitchen();
+                }}
+                className="h-14 w-full rounded-button border border-slate-200 bg-slate-50 px-4 pr-14 text-lg font-bold tracking-[0.28em] text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                placeholder={kitchenAccess.pinPlaceholder}
+                aria-label="Kitchen PIN"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin((visible) => !visible)}
+                className="absolute inset-y-0 right-2 grid w-10 place-items-center rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-950"
+                aria-label={showPin ? "Hide PIN" : "Show PIN"}
+              >
+                {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => void unlockKitchen()}

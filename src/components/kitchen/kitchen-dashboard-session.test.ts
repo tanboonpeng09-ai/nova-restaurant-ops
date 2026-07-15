@@ -6,6 +6,10 @@ const source = readFileSync(
   path.resolve(process.cwd(), "src/components/kitchen/kitchen-dashboard.tsx"),
   "utf8"
 );
+const configSource = readFileSync(
+  path.resolve(process.cwd(), "src/config/restaurant.ts"),
+  "utf8"
+);
 
 describe("Kitchen dashboard session boundary", () => {
   it("initializes unlocked state from the server-provided boolean", () => {
@@ -33,5 +37,16 @@ describe("Kitchen dashboard session boundary", () => {
     expect(source).toContain('result.code === "KITCHEN_SESSION_REQUIRED"');
     expect(source).toContain("setUnlocked(false)");
     expect(source).toContain("return false;");
+  });
+
+  it("keeps the Kitchen PIN screen masked without exposing a credential", () => {
+    expect(configSource).toContain('pinHelpText: "Enter your kitchen PIN to continue."');
+    expect(configSource).toContain('pinPlaceholder: "Enter PIN"');
+    expect(configSource).not.toContain("Demo PIN");
+    expect(configSource).not.toContain("123456");
+    expect(source).toContain('type={showPin ? "text" : "password"}');
+    expect(source).toContain('aria-label={showPin ? "Hide PIN" : "Show PIN"}');
+    expect(source).toContain('type="button"');
+    expect(source).toContain("setShowPin((visible) => !visible)");
   });
 });
